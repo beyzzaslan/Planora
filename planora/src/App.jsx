@@ -18,7 +18,7 @@ function App() {
       <div className="main">
         {/*childdan parentse geçmek için bi props tanımlıyoruz */}
         <ToDoCreate onCreateTodo={createTodo} />
-        <ToDoList />
+        <ToDoList todos={todos} />
       </div>
     </div>
   );

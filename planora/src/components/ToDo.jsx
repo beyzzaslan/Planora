@@ -3,7 +3,8 @@ import { CiSquareRemove } from "react-icons/ci";
 import { CiEdit } from "react-icons/ci";
 import "../css/todo.css";
 
-function ToDo() {
+function ToDo({ todo }) {
+  const { id, content } = todo;
   return (
     <div
       style={{
@@ -13,9 +14,10 @@ function ToDo() {
         justifyContent: "space-between",
         border: "1px solid lightgrey",
         padding: "10px",
+        marginTop: "10px",
       }}
     >
-      <div>Ben ilk todoyum </div>
+      <div>{content}</div>
       <div>
         <CiSquareRemove className="todo-icons" />
         <CiEdit className="todo-icons" />

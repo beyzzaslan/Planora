@@ -1,6 +1,6 @@
 import React from "react";
 import ToDo from "./ToDo";
-function ToDoList() {
+function ToDoList({ todos }) {
   return (
     <div
       style={{
@@ -8,7 +8,7 @@ function ToDoList() {
         marginTop: "50px",
       }}
     >
-      <ToDo />
+      {todos && todos.map((todo) => <ToDo key={todo.id} todo={todo} />)}
     </div>
   );
 }

@@ -3,6 +3,10 @@ import "../css/todo.css";
 
 function ToDoCreate({ onCreateTodo }) {
   const [newTodo, setNewTodo] = useState(""); //todo nun içeriğini bunda tutucaz
+  const clearInput = () => {
+    setNewTodo("");
+  };
+
   const createTodo = () => {
     if (!newTodo) return;
 
@@ -11,6 +15,8 @@ function ToDoCreate({ onCreateTodo }) {
       content: newTodo,
     };
     onCreateTodo(request);
+    //yeni bir todo eklendikten sonra inputun içini temizleyeceğiz
+    clearInput();
   };
   return (
     <div className="todo-create">
