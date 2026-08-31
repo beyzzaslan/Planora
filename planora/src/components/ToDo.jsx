@@ -1,13 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { CiSquareRemove } from "react-icons/ci";
 import { CiEdit } from "react-icons/ci";
+import { FaCheck } from "react-icons/fa6";
+
 import "../css/todo.css";
 
-function ToDo({ todo, onRemoveTodo }) {
+function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
   const { id, content } = todo;
   const removeTodo = () => {
     onRemoveTodo(id);
   };
+  const [editable, setEditable] = useState(false);
+  const [newTodo, setNewTodo] = useState(content);
+  const updateTodo = () => {
+    const request = {
+      id: id,
+      content: newTodo,
+    };
+    onUpdateTodo(request);
+    setEditable(false);
+  };
+
   return (
     <div
       style={{
@@ -20,10 +33,26 @@ function ToDo({ todo, onRemoveTodo }) {
         marginTop: "10px",
       }}
     >
-      <div>{content}</div>
+      <div>
+        {editable ? (
+          <input
+            value={newTodo}
+            onChange={(e) => setNewTodo(e.target.value)}
+            style={{ width: "380px" }}
+            className="todo-input "
+            type="text"
+          />
+        ) : (
+          content
+        )}
+      </div>
       <div>
         <CiSquareRemove className="todo-icons" onClick={removeTodo} />
-        <CiEdit className="todo-icons" />
+        {editable ? (
+          <FaCheck className="todo-icons" onClick={updateTodo} />
+        ) : (
+          <CiEdit className="todo-icons" onClick={() => setEditable(true)} />
+        )}
       </div>
     </div>
   );
