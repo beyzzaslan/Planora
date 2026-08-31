@@ -3,8 +3,11 @@ import { CiSquareRemove } from "react-icons/ci";
 import { CiEdit } from "react-icons/ci";
 import "../css/todo.css";
 
-function ToDo({ todo }) {
+function ToDo({ todo, onRemoveTodo }) {
   const { id, content } = todo;
+  const removeTodo = () => {
+    onRemoveTodo(id);
+  };
   return (
     <div
       style={{
@@ -19,7 +22,7 @@ function ToDo({ todo }) {
     >
       <div>{content}</div>
       <div>
-        <CiSquareRemove className="todo-icons" />
+        <CiSquareRemove className="todo-icons" onClick={removeTodo} />
         <CiEdit className="todo-icons" />
       </div>
     </div>

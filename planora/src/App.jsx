@@ -12,13 +12,16 @@ function App() {
     //burda şu mantık var önceki todoları bana aç ve üzerine yeni todo ekle mantıgında aşağıdaki kod
     setTodos([...todos, newTodo]);
   };
-  console.log(todos);
+
+  const removeTodo = (todoId) => {
+    setTodos([...todos.filter((todo) => todo.id !== todoId)]);
+  };
   return (
     <div className="App">
       <div className="main">
         {/*childdan parentse geçmek için bi props tanımlıyoruz */}
         <ToDoCreate onCreateTodo={createTodo} />
-        <ToDoList todos={todos} />
+        <ToDoList todos={todos} onRemoveTodo={removeTodo} />
       </div>
     </div>
   );

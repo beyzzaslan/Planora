@@ -1,6 +1,6 @@
 import React from "react";
 import ToDo from "./ToDo";
-function ToDoList({ todos }) {
+function ToDoList({ todos, onRemoveTodo }) {
   return (
     <div
       style={{
@@ -8,7 +8,10 @@ function ToDoList({ todos }) {
         marginTop: "50px",
       }}
     >
-      {todos && todos.map((todo) => <ToDo key={todo.id} todo={todo} />)}
+      {todos &&
+        todos.map((todo) => (
+          <ToDo key={todo.id} todo={todo} onRemoveTodo={onRemoveTodo} />
+        ))}
     </div>
   );
 }
