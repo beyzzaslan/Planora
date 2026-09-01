@@ -9,8 +9,14 @@ function App() {
   const [todos, setTodos] = useState([]);
 
   const createTodo = (newTodo) => {
-    //burda şu mantık var önceki todoları bana aç ve üzerine yeni todo ekle mantıgında aşağıdaki kod
     setTodos([...todos, newTodo]);
+  };
+  const checkTask = (todoId) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === todoId ? { ...todo, completed: !todo.completed } : todo,
+      ),
+    );
   };
 
   const removeTodo = (todoId) => {
@@ -25,6 +31,7 @@ function App() {
     });
     setTodos([...updatedTodos]);
   };
+
   return (
     <div className="App">
       <div className="main">
