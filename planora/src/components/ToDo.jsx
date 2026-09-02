@@ -6,39 +6,36 @@ import { FaCheck } from "react-icons/fa6";
 import "../css/todo.css";
 
 function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
-  const { id, content } = todo;
+  const { id, content, completed } = todo;
+  const [editable, setEditable] = useState(false);
+  const [newTodo, setNewTodo] = useState(content);
+
   const removeTodo = () => {
     onRemoveTodo(id);
   };
-  const [editable, setEditable] = useState(false);
-  const [newTodo, setNewTodo] = useState(content);
-  const updateTodo = () => {
+
+  const updateTodo = async () => {
+    if (!newTodo.trim()) return;
+
     const request = {
-      id: id,
       content: newTodo,
+      completed: completed,
     };
-    onUpdateTodo(request);
-    setEditable(false);
+
+    const updated = await onUpdateTodo(id, request);
+
+    if (updated) {
+      setEditable(false);
+    }
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        border: "1px solid lightgrey",
-        padding: "10px",
-        marginTop: "10px",
-      }}
-    >
-      <div>
+    <div className="todo-item">
+      <div className="todo-content">
         {editable ? (
           <input
             value={newTodo}
             onChange={(e) => setNewTodo(e.target.value)}
-            style={{ width: "380px" }}
             className="todo-input "
             type="text"
           />
@@ -46,7 +43,7 @@ function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
           content
         )}
       </div>
-      <div>
+      <div className="todo-actions">
         <CiSquareRemove className="todo-icons" onClick={removeTodo} />
         {editable ? (
           <FaCheck className="todo-icons" onClick={updateTodo} />

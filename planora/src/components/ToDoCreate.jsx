@@ -7,16 +7,17 @@ function ToDoCreate({ onCreateTodo }) {
     setNewTodo("");
   };
 
-  const createTodo = () => {
-    if (!newTodo) return;
+  const createTodo = async () => {
+    if (!newTodo.trim()) return;
 
     const request = {
-      id: Math.floor(Math.random() * 99999999),
       content: newTodo,
+      completed: false, //görev yeni atandığı için completed durumunu false diyoruz
     };
-    onCreateTodo(request);
-    //yeni bir todo eklendikten sonra inputun içini temizleyeceğiz
-    clearInput();
+    const created = await onCreateTodo(request);
+    if (created) {
+      clearInput();
+    }
   };
   return (
     <div className="todo-create">
