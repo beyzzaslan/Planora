@@ -31,16 +31,20 @@ public class TaskService {
     public Optional<Task> updateTask(Long id, Task updatedTask) {
         return taskRepository.findById(id).map(task -> {
             task.setContent(updatedTask.getContent());
-            task.setCompleted(updatedTask.isCompleted());
+            task.setColor(updatedTask.getColor());
+            task.setPriority(updatedTask.getPriority());
+            task.setTaskDate(updatedTask.getTaskDate());
+            task.setTaskTime(updatedTask.getTaskTime());
+            task.setStatus(updatedTask.getStatus());
             return taskRepository.save(task);
         });
     }
 
-    public boolean deleteTask(Long id){
-        if(!taskRepository.existsById(id)){
+    public boolean deleteTask(Long id) {
+        if (!taskRepository.existsById(id)) {
             return false;
         }
         taskRepository.deleteById(id);
-        return true;    
+        return true;
     }
 }

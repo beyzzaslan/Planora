@@ -3,8 +3,17 @@ import "../css/todo.css";
 
 function ToDoCreate({ onCreateTodo }) {
   const [newTodo, setNewTodo] = useState(""); //todo nun içeriğini bunda tutucaz
+  const [color, setColor] = useState("#F9A8D4");
+  const [priority, setPriority] = useState("MEDIUM");
+  const [taskDate, setTaskDate] = useState("");
+  const [taskTime, setTaskTime] = useState("");
+
   const clearInput = () => {
     setNewTodo("");
+    setColor("#F9A8D4");
+    setPriority("MEDIUM");
+    setTaskDate("");
+    setTaskTime("");
   };
 
   const createTodo = async () => {
@@ -12,7 +21,11 @@ function ToDoCreate({ onCreateTodo }) {
 
     const request = {
       content: newTodo,
-      completed: false, //görev yeni atandığı için completed durumunu false diyoruz
+      color: color,
+      priority: priority,
+      taskDate: taskDate || null,
+      taskTime: taskTime || null,
+      status: "ACTIVE",
     };
     const created = await onCreateTodo(request);
     if (created) {
