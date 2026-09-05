@@ -41,7 +41,7 @@ function App() {
             );
 
             const reminderIsDue = reminderDateTime <= now;
-
+            const taskHasNotPassed = taskDateTime > now;
             const reminderKey = `${reminder.id}-${reminder.taskDate}-${reminder.taskTime}`;
 
             if (
