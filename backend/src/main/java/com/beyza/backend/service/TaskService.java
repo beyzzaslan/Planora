@@ -1,7 +1,9 @@
 package com.beyza.backend.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,34 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
+    public List<Task> getUpcomingReminders() {
+        LocalDateTime now = LocalDateTime.now();
+
+        return taskRepository.findAll()
+                .stream()
+                .filter(task -> Boolean.TRUE.equals(task.getReminderEnabled()))
+                .filter(task -> task.getTaskDate() != null)
+                .filter(task -> task.getTaskTime() != null)
+                .filter(task -> task.getReminderOffset() != null)
+                .filter(task -> task.getStatus() != null
+                        && task.getStatus().name().equals("ACTIVE"))
+                .filter(task -> {
+                    LocalDateTime taskDateTime = LocalDateTime.of(
+                            task.getTaskDate(),
+                            task.getTaskTime());
+
+                    LocalDateTime reminderDateTime = taskDateTime
+                            .minusMinutes(task.getReminderOffset());
+
+                    LocalDateTime tomorrow = now.plusDays(1);
+                    boolean taskHasNotPassed = !taskDateTime.isBefore(now);
+                    boolean reminderIsInNext24Hours = !reminderDateTime.isAfter(tomorrow);
+
+                    return taskHasNotPassed && reminderIsInNext24Hours;
+                })
+                .collect(Collectors.toList());
+    }
+
     public Optional<Task> getTaskById(Long id) {
         return taskRepository.findById(id);
     }
@@ -36,6 +66,8 @@ public class TaskService {
             task.setTaskDate(updatedTask.getTaskDate());
             task.setTaskTime(updatedTask.getTaskTime());
             task.setStatus(updatedTask.getStatus());
+            task.setReminderEnabled(updatedTask.getReminderEnabled());
+            task.setReminderOffset(updatedTask.getReminderOffset());
             return taskRepository.save(task);
         });
     }

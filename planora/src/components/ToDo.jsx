@@ -6,7 +6,17 @@ import { FaCheck } from "react-icons/fa6";
 import "../css/todo.css";
 
 function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
-  const { id, content, color, priority, taskDate, taskTime, status } = todo;
+  const {
+    id,
+    content,
+    color,
+    priority,
+    taskDate,
+    taskTime,
+    status,
+    reminderEnabled,
+    reminderOffset,
+  } = todo;
   const [editable, setEditable] = useState(false);
   const [newTodo, setNewTodo] = useState(content);
 
@@ -24,6 +34,8 @@ function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
       taskDate: taskDate,
       taskTime: taskTime,
       status: status,
+      reminderEnabled: reminderEnabled,
+      reminderOffset: reminderOffset,
     };
 
     const updated = await onUpdateTodo(id, request);
@@ -40,6 +52,8 @@ function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
       taskDate: taskDate,
       taskTime: taskTime,
       status: status === "COMPLETED" ? "ACTIVE" : "COMPLETED", //Görev tamamlandıysa aktife çevirir, aktifse tamamlandı yapar.
+      reminderEnabled: reminderEnabled,
+      reminderOffset: reminderOffset,
     };
     await onUpdateTodo(id, request);
   };
@@ -69,6 +83,9 @@ function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
               <span>Öncelik: {priority}</span>
               {taskDate && <span>Tarih: {taskDate}</span>}
               {taskTime && <span>Saat: {taskTime}</span>}
+              {reminderEnabled && (
+                <span>Hatırlatıcı: {reminderOffset} dk önce</span>
+              )}
             </div>
           </>
         )}

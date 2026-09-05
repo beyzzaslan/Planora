@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import heroImg from "./assets/hero.png";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
 import "./App.css";
 import ToDoCreate from "./components/ToDoCreate";
 import ToDoList from "./components/ToDoList";
 function App() {
   const [todos, setTodos] = useState([]);
-
+  const [reminders, setReminders] = useState([]);
   useEffect(() => {
     const getTasks = async () => {
       try {
@@ -19,6 +16,24 @@ function App() {
       }
     };
     getTasks();
+  }, []);
+
+  useEffect(() => {
+    const getReminders = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/api/tasks/reminders",
+        );
+        setReminders(response.data); //Gelen veriler reminders state'ine kaydediliyor
+      } catch (error) {
+        console.error("Hatırlatıcılar getirilemedi : ", error);
+      }
+    };
+    getReminders();
+    const reminderInterval = setInterval(getReminders, 60000); // 1 dakika aralıklarla hatırlatıcıları güncelle
+    return () => {
+      clearInterval(reminderInterval);
+    };
   }, []);
 
   const createTodo = async (newTodo) => {
@@ -67,7 +82,22 @@ function App() {
     <div className="App">
       <div className="main">
         {/*childdan parentse geçmek için bi props tanımlıyoruz */}
+        {reminders.length > 0 && (
+          <div className="reminder-panel">
+            <h3>Yaklaşan Hatırlatıcılar</h3>
+
+            {reminders.map((reminder) => (
+              <div className="reminder-item" key={reminder.id}>
+                <strong>{reminder.content}</strong>
+                <span>
+                  {reminder.taskDate} {reminder.taskTime}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         <ToDoCreate onCreateTodo={createTodo} />
+
         <ToDoList
           todos={todos}
           onRemoveTodo={removeTodo}

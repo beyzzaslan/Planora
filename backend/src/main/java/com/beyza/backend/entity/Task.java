@@ -43,4 +43,10 @@ public class Task {
     @Setter
     @Enumerated(EnumType.STRING)
     private TaskStatus status = TaskStatus.ACTIVE;
+
+    @Setter
+    private Boolean reminderEnabled = false;
+
+    @Setter
+    private Integer reminderOffset;
 }

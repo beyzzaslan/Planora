@@ -31,6 +31,11 @@ public class TaskController {
         return taskService.getAllTasks();
     }
 
+    @GetMapping("/reminders")
+    public List<Task> getUpcomingReminders() {
+        return taskService.getUpcomingReminders();
+    }
+
     @GetMapping("/{id}") // optional ile yazdıgımız ıcın varsa veya yoksa durumunu da yazıyoruz
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
         return taskService.getTaskById(id).map(ResponseEntity::ok)

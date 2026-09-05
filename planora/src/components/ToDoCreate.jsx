@@ -7,6 +7,8 @@ function ToDoCreate({ onCreateTodo }) {
   const [priority, setPriority] = useState("MEDIUM");
   const [taskDate, setTaskDate] = useState("");
   const [taskTime, setTaskTime] = useState("");
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderOffset, setReminderOffset] = useState(30);
 
   const clearInput = () => {
     setNewTodo("");
@@ -14,6 +16,8 @@ function ToDoCreate({ onCreateTodo }) {
     setPriority("MEDIUM");
     setTaskDate("");
     setTaskTime("");
+    setReminderEnabled(false);
+    setReminderOffset(30);
   };
 
   const createTodo = async () => {
@@ -26,6 +30,8 @@ function ToDoCreate({ onCreateTodo }) {
       taskDate: taskDate || null,
       taskTime: taskTime || null,
       status: "ACTIVE",
+      reminderEnabled: reminderEnabled,
+      reminderOffset: reminderEnabled ? Number(reminderOffset) : null,
     };
     const created = await onCreateTodo(request);
     if (created) {
@@ -80,6 +86,30 @@ function ToDoCreate({ onCreateTodo }) {
             value={taskTime}
             onChange={(e) => setTaskTime(e.target.value)}
           />
+        </label>
+
+        <label>
+          Hatırlatıcı
+          <input
+            type="checkbox"
+            checked={reminderEnabled}
+            onChange={(e) => setReminderEnabled(e.target.checked)}
+          />
+        </label>
+
+        <label>
+          Kaç dakika önce ?
+          <select
+            value={reminderOffset}
+            onChange={(e) => setReminderOffset(e.target.value)}
+            disabled={!reminderEnabled}
+          >
+            <option value="5">5 dakika</option>
+            <option value="15">15 dakika</option>
+            <option value="30">30 dakika</option>
+            <option value="60">1 saat</option>
+            <option value="1440">1 gün</option>
+          </select>
         </label>
       </div>
 
