@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "./App.css";
 import ToDoCreate from "./components/ToDoCreate";
@@ -6,6 +6,8 @@ import ToDoList from "./components/ToDoList";
 function App() {
   const [todos, setTodos] = useState([]);
   const [reminders, setReminders] = useState([]);
+  const notifiedReminderIds = useRef(new Set());
+
   useEffect(() => {
     const getTasks = async () => {
       try {
@@ -25,6 +27,36 @@ function App() {
           "http://localhost:8080/api/tasks/reminders",
         );
         setReminders(response.data); //Gelen veriler reminders state'ine kaydediliyor
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          const now = new Date();
+
+          response.data.forEach((reminder) => {
+            const taskDateTime = new Date(
+              `${reminder.taskDate}T${reminder.taskTime}`,
+            );
+
+            const reminderDateTime = new Date(
+              taskDateTime.getTime() - reminder.reminderOffset * 60 * 1000,
+            );
+
+            const reminderIsDue = reminderDateTime <= now;
+
+            const reminderKey = `${reminder.id}-${reminder.taskDate}-${reminder.taskTime}`;
+
+            if (
+              reminderIsDue &&
+              taskHasNotPassed &&
+              !notifiedReminderIds.current.has(reminderKey)
+            ) {
+              new Notification("Planora Hatırlatıcısı", {
+                body: `${reminder.content} - ${reminder.reminderOffset} dakika kaldı`,
+              });
+
+              notifiedReminderIds.current.add(reminderKey);
+            }
+          });
+        }
       } catch (error) {
         console.error("Hatırlatıcılar getirilemedi : ", error);
       }
@@ -34,6 +66,12 @@ function App() {
     return () => {
       clearInterval(reminderInterval);
     };
+  }, []);
+
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   }, []);
 
   const createTodo = async (newTodo) => {

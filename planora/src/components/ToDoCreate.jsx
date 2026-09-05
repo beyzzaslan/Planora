@@ -104,6 +104,7 @@ function ToDoCreate({ onCreateTodo }) {
             onChange={(e) => setReminderOffset(e.target.value)}
             disabled={!reminderEnabled}
           >
+            <option value="1">1 dakika</option>
             <option value="5">5 dakika</option>
             <option value="15">15 dakika</option>
             <option value="30">30 dakika</option>
