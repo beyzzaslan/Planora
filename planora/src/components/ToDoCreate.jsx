@@ -41,6 +41,48 @@ function ToDoCreate({ onCreateTodo }) {
         type="text"
         placeholder="Todo giriniz "
       />
+
+      <div className="todo-options">
+        <label>
+          Renk
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+          />
+        </label>
+
+        <label>
+          Öncelik
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+          >
+            <option value="LOW">Düşük</option>
+            <option value="MEDIUM">Orta</option>
+            <option value="HIGH">Yüksek</option>
+          </select>
+        </label>
+
+        <label>
+          Tarih
+          <input
+            type="date"
+            value={taskDate}
+            onChange={(e) => setTaskDate(e.target.value)}
+          ></input>
+        </label>
+
+        <label>
+          Saat
+          <input
+            type="time"
+            value={taskTime}
+            onChange={(e) => setTaskTime(e.target.value)}
+          />
+        </label>
+      </div>
+
       <button onClick={createTodo} className="todo-create-button">
         Todo oluştur
       </button>

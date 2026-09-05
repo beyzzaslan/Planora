@@ -6,7 +6,7 @@ import { FaCheck } from "react-icons/fa6";
 import "../css/todo.css";
 
 function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
-  const { id, content, completed } = todo;
+  const { id, content, color, priority, taskDate, taskTime, status } = todo;
   const [editable, setEditable] = useState(false);
   const [newTodo, setNewTodo] = useState(content);
 
@@ -19,7 +19,11 @@ function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
 
     const request = {
       content: newTodo,
-      completed: completed,
+      color: color,
+      priority: priority,
+      taskDate: taskDate,
+      taskTime: taskTime,
+      status: status,
     };
 
     const updated = await onUpdateTodo(id, request);
@@ -28,9 +32,27 @@ function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
       setEditable(false);
     }
   };
-
+  const toggleStatus = async () => {
+    const request = {
+      content: content,
+      color: color,
+      priority: priority,
+      taskDate: taskDate,
+      taskTime: taskTime,
+      status: status === "COMPLETED" ? "ACTIVE" : "COMPLETED", //Görev tamamlandıysa aktife çevirir, aktifse tamamlandı yapar.
+    };
+    await onUpdateTodo(id, request);
+  };
   return (
-    <div className="todo-item">
+    <div
+      className={`todo-item ${status === "COMPLETED" ? "completed" : ""}`}
+      style={{ borderLeft: `6px solid ${color}` }}
+    >
+      <input
+        type="checkbox"
+        checked={status === "COMPLETED"}
+        onChange={toggleStatus}
+      />
       <div className="todo-content">
         {editable ? (
           <input
@@ -40,7 +62,15 @@ function ToDo({ todo, onRemoveTodo, onUpdateTodo }) {
             type="text"
           />
         ) : (
-          content
+          <>
+            <div className="todo-text">{content}</div>
+
+            <div className="todo-meta">
+              <span>Öncelik: {priority}</span>
+              {taskDate && <span>Tarih: {taskDate}</span>}
+              {taskTime && <span>Saat: {taskTime}</span>}
+            </div>
+          </>
         )}
       </div>
       <div className="todo-actions">
