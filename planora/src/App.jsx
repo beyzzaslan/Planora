@@ -3,9 +3,13 @@ import axios from "axios";
 import "./App.css";
 import ToDoCreate from "./components/ToDoCreate";
 import ToDoList from "./components/ToDoList";
+import "./css/notes.css";
+import NoteCreate from "./components/NoteCreate";
+import NoteList from "./components/NoteList";
 function App() {
   const [todos, setTodos] = useState([]);
   const [reminders, setReminders] = useState([]);
+  const [notes, setNotes] = useState([]);
   const notifiedReminderIds = useRef(new Set());
 
   useEffect(() => {
@@ -88,6 +92,72 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/notes");
+        setNotes(response.data);
+      } catch (error) {
+        console.error("Notlar getirilemedi: ", error);
+      }
+    };
+    fetchNotes();
+  }, []);
+
+  const createNote = async (newNote) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/notes",
+        newNote,
+      );
+      setNotes((current) => [response.data, ...current]);
+      return true;
+    } catch (error) {
+      console.error("Not oluşturulamadı : ", error);
+      return false;
+    }
+  };
+
+  const updateNote = async (id, updatedNote) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/api/notes/${id}`,
+        updatedNote,
+      );
+
+      setNotes((current) =>
+        current.map((note) => (note.id === id ? response.data : note)),
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Not güncellenemedi:", error);
+      return false;
+    }
+  };
+
+  const deleteNote = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8080/api/notes/${id}`);
+      setNotes((current) => current.filter((note) => note.id !== id));
+    } catch (error) {
+      console.error("Not silinemedi", error);
+    }
+  };
+
+  const togglePin = async (id) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:8080/api/notes/${id}/pin`,
+      );
+      setNotes((current) =>
+        current.map((note) => (note.id === id ? response.data : note)),
+      );
+    } catch (error) {
+      console.error("Pin değiştirilemedi:", error);
+    }
+  };
+
   const removeTodo = async (todoId) => {
     try {
       await axios.delete(`http://localhost:8080/api/tasks/${todoId}`);
@@ -141,6 +211,16 @@ function App() {
           onRemoveTodo={removeTodo}
           onUpdateTodo={updateTodo}
         />
+        <div className="notes-section">
+          <h2>Notlar</h2>
+          <NoteCreate onCreateNote={createNote} />
+          <NoteList
+            notes={notes}
+            onDeleteNote={deleteNote}
+            onUpdateNote={updateNote}
+            onTogglePin={togglePin}
+          />
+        </div>
       </div>
     </div>
   );
