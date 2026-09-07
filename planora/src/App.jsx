@@ -6,11 +6,15 @@ import ToDoList from "./components/ToDoList";
 import "./css/notes.css";
 import NoteCreate from "./components/NoteCreate";
 import NoteList from "./components/NoteList";
+
+import MediaCreate from "./components/MediaCreate";
+import MediaList from "./components/MediaList";
 function App() {
   const [todos, setTodos] = useState([]);
   const [reminders, setReminders] = useState([]);
   const [notes, setNotes] = useState([]);
   const notifiedReminderIds = useRef(new Set());
+  const [mediaList, setMediaList] = useState([]);
 
   useEffect(() => {
     const getTasks = async () => {
@@ -186,6 +190,41 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    const fetchMedia = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/media");
+        setMediaList(response.data);
+      } catch (error) {
+        console.error("Media listesi getirilemedi:", error);
+      }
+    };
+    fetchMedia();
+  }, []);
+
+  const createMedia = async (newMedia) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/media",
+        newMedia,
+      );
+      setMediaList((current) => [response.data, ...current]);
+      return true;
+    } catch (error) {
+      console.error("Medya oluşturulamadı:", error);
+      return false;
+    }
+  };
+
+  const deleteMedia = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8080/api/media/${id}`);
+      setMediaList((current) => current.filter((media) => media.id !== id));
+    } catch (error) {
+      console.error("Medya silinemedi", error);
+    }
+  };
+
   return (
     <div className="App">
       <div className="main">
@@ -220,6 +259,12 @@ function App() {
             onUpdateNote={updateNote}
             onTogglePin={togglePin}
           />
+        </div>
+
+        <div className="media-section">
+          <h2>Medya</h2>
+          <MediaCreate onCreateMedia={createMedia} />
+          <MediaList mediaList={mediaList} onDeleteMedia={deleteMedia} />
         </div>
       </div>
     </div>

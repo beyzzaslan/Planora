@@ -91,3 +91,27 @@
   margin-top: 12px;
   flex-wrap: wrap;
 }
+
+.media-section {
+  margin-top: 40px;
+}
+
+.media-create {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.media-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.media-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px;
+  background: white;
+}
