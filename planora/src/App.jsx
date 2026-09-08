@@ -255,6 +255,23 @@ function App() {
     }
   };
 
+  const updateMedia = async (id, updatedMedia) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/api/media/${id}`,
+        updatedMedia,
+      );
+
+      setMediaList((current) =>
+        current.map((media) => (media.id === id ? response.data : media)),
+      );
+      return true;
+    } catch (error) {
+      console.error("Kaynak güncellenemedi:", error);
+      return false;
+    }
+  };
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -486,7 +503,11 @@ function App() {
           <div className="content-section">
             <div className="media-section">
               <MediaCreate onCreateMedia={createMedia} />
-              <MediaList mediaList={mediaList} onDeleteMedia={deleteMedia} />
+              <MediaList
+                mediaList={mediaList}
+                onDeleteMedia={deleteMedia}
+                onUpdateMedia={updateMedia}
+              />
             </div>
           </div>
         )}
