@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BsPinAngle, BsPinAngleFill } from "react-icons/bs";
 
 function NoteItem({ note, onDeleteNote, onUpdateNote, onTogglePin }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -24,7 +25,7 @@ function NoteItem({ note, onDeleteNote, onUpdateNote, onTogglePin }) {
   return (
     <div
       className={`note-card ${note.pinned ? "pinned" : ""}`}
-      style={{ backgroundColor: color }}
+      style={{ borderLeftColor: color }}
     >
       <div className="note-header">
         {isEditing ? (
@@ -38,8 +39,13 @@ function NoteItem({ note, onDeleteNote, onUpdateNote, onTogglePin }) {
           <h3>{note.title || "Başlıksız not"}</h3>
         )}
 
-        <button className="ghost-button" onClick={() => onTogglePin(note.id)}>
-          {note.pinned ? "Unpin" : "Pin"}
+        <button
+          className="ghost-button"
+          onClick={() => onTogglePin(note.id)}
+          aria-label={note.pinned ? "Unpin note" : "Pin note"}
+          title={note.pinned ? "Unpin note" : "Pin note"}
+        >
+          {note.pinned ? <BsPinAngleFill /> : <BsPinAngle />}
         </button>
       </div>
 

@@ -15,6 +15,36 @@ function App() {
   const [notes, setNotes] = useState([]);
   const notifiedReminderIds = useRef(new Set());
   const [mediaList, setMediaList] = useState([]);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const completedTodos = todos.filter(
+    (todo) => todo.status === "COMPLETED",
+  ).length;
+  const pendingTodos = todos.length - completedTodos;
+  const pinnedNotes = notes.filter((note) => note.pinned);
+  const pageMeta = {
+    dashboard: {
+      label: "Your day at a glance",
+      title: "Dashboard",
+      icon: "📊",
+    },
+    tasks: { label: "Plan and organize", title: "Tasks", icon: "✅" },
+    notes: { label: "Capture your ideas", title: "Notes", icon: "📝" },
+    media: { label: "Keep your references", title: "Media", icon: "🗂️" },
+    profile: { label: "Your personal space", title: "Profile", icon: "👤" },
+  };
+  const [profile, setProfile] = useState({
+    name: "Beyza",
+    email: "beyza@example.com",
+    focus: "Daily",
+  });
+
+  const handleProfileChange = (field, value) => {
+    setProfile((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
 
   useEffect(() => {
     const getTasks = async () => {
@@ -226,47 +256,299 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <div className="main">
-        {/*childdan parentse geçmek için bi props tanımlıyoruz */}
-        {reminders.length > 0 && (
-          <div className="reminder-panel">
-            <h3>Yaklaşan Hatırlatıcılar</h3>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">P</div>
+          <div>
+            <strong>Planora</strong>
+            <small>Personal Planner</small>
+          </div>
+        </div>
 
-            {reminders.map((reminder) => (
-              <div className="reminder-item" key={reminder.id}>
-                <strong>{reminder.content}</strong>
-                <span>
-                  {reminder.taskDate} {reminder.taskTime}
-                </span>
+        <nav className="nav-menu">
+          <button
+            className={
+              activeTab === "dashboard" ? "nav-item active" : "nav-item"
+            }
+            onClick={() => setActiveTab("dashboard")}
+          >
+            Dashboard
+          </button>
+          <button
+            className={activeTab === "tasks" ? "nav-item active" : "nav-item"}
+            onClick={() => setActiveTab("tasks")}
+          >
+            Tasks
+          </button>
+          <button
+            className={activeTab === "notes" ? "nav-item active" : "nav-item"}
+            onClick={() => setActiveTab("notes")}
+          >
+            Notes
+          </button>
+          <button
+            className={activeTab === "media" ? "nav-item active" : "nav-item"}
+            onClick={() => setActiveTab("media")}
+          >
+            Media
+          </button>
+          <button
+            className={activeTab === "profile" ? "nav-item active" : "nav-item"}
+            onClick={() => setActiveTab("profile")}
+          >
+            Profile
+          </button>
+        </nav>
+      </aside>
+
+      <main className="main-panel">
+        <header className="topbar">
+          <div>
+            <p className="topbar-label">{pageMeta[activeTab].label}</p>
+            <h1>
+              <span className="page-icon" aria-hidden="true">
+                {pageMeta[activeTab].icon}
+              </span>
+              {pageMeta[activeTab].title}
+            </h1>
+          </div>
+
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => setActiveTab("tasks")}
+            >
+              + New Task
+            </button>
+
+            <div className="profile-menu-wrapper">
+              <button
+                type="button"
+                className="profile-badge"
+                onClick={() => setProfileMenuOpen((current) => !current)}
+              >
+                B
+              </button>
+
+              {profileMenuOpen && (
+                <div className="profile-menu">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("profile");
+                      setProfileMenuOpen(false);
+                    }}
+                  >
+                    Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("dashboard");
+                      setProfileMenuOpen(false);
+                    }}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {activeTab === "dashboard" && (
+          <>
+            <section className="stats-grid">
+              <div className="stat-card">
+                <span>Total Tasks</span>
+                <strong>{todos.length}</strong>
               </div>
-            ))}
+              <div className="stat-card">
+                <span>Notes</span>
+                <strong>{notes.length}</strong>
+              </div>
+              <div className="stat-card">
+                <span>Media</span>
+                <strong>{mediaList.length}</strong>
+              </div>
+              <div className="stat-card">
+                <span>Reminders</span>
+                <strong>{reminders.length}</strong>
+              </div>
+            </section>
+
+            <section className="dashboard-grid">
+              <div className="panel full-width-panel">
+                <h3>Upcoming Reminders</h3>
+
+                {reminders.length > 0 ? (
+                  reminders.slice(0, 4).map((reminder) => (
+                    <div className="mini-reminder" key={reminder.id}>
+                      <div>
+                        <strong>{reminder.content}</strong>
+                        <small>
+                          {reminder.taskDate} · {reminder.taskTime}
+                        </small>
+                      </div>
+                      <span>{reminder.reminderOffset} min</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="empty-text">No reminders yet.</p>
+                )}
+              </div>
+
+              <div className="panel">
+                <div className="panel-heading">
+                  <h3>Pinned Notes</h3>
+                  <span className="panel-count">{pinnedNotes.length}</span>
+                </div>
+
+                {pinnedNotes.length > 0 ? (
+                  <div className="pinned-note-list">
+                    {pinnedNotes.map((pinnedNote) => (
+                      <div
+                        key={pinnedNote.id}
+                        className="pinned-note-item"
+                        style={{
+                          borderLeftColor: pinnedNote.color || "#F9A8D4",
+                        }}
+                      >
+                        <strong>{pinnedNote.title || "Başlıksız not"}</strong>
+
+                        <p>{pinnedNote.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="empty-text">No pinned notes yet.</p>
+                )}
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeTab === "tasks" && (
+          <div className="content-section">
+            <div className="task-summary-row">
+              <div className="task-summary-card">
+                <span>Total</span>
+                <strong>{todos.length}</strong>
+              </div>
+              <div className="task-summary-card">
+                <span>Done</span>
+                <strong>{completedTodos}</strong>
+              </div>
+              <div className="task-summary-card">
+                <span>Pending</span>
+                <strong>{pendingTodos}</strong>
+              </div>
+            </div>
+            <ToDoCreate onCreateTodo={createTodo} />
+            <ToDoList
+              todos={todos}
+              onRemoveTodo={removeTodo}
+              onUpdateTodo={updateTodo}
+            />
           </div>
         )}
-        <ToDoCreate onCreateTodo={createTodo} />
 
-        <ToDoList
-          todos={todos}
-          onRemoveTodo={removeTodo}
-          onUpdateTodo={updateTodo}
-        />
-        <div className="notes-section">
-          <h2>Notlar</h2>
-          <NoteCreate onCreateNote={createNote} />
-          <NoteList
-            notes={notes}
-            onDeleteNote={deleteNote}
-            onUpdateNote={updateNote}
-            onTogglePin={togglePin}
-          />
-        </div>
+        {activeTab === "notes" && (
+          <div className="content-section">
+            <div className="notes-section">
+              <div className="note-create-column">
+                <NoteCreate onCreateNote={createNote} />
+              </div>
 
-        <div className="media-section">
-          <h2>Medya</h2>
-          <MediaCreate onCreateMedia={createMedia} />
-          <MediaList mediaList={mediaList} onDeleteMedia={deleteMedia} />
-        </div>
-      </div>
+              <div className="note-list-column">
+                <NoteList
+                  notes={notes}
+                  onDeleteNote={deleteNote}
+                  onUpdateNote={updateNote}
+                  onTogglePin={togglePin}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "media" && (
+          <div className="content-section">
+            <div className="media-section">
+              <MediaCreate onCreateMedia={createMedia} />
+              <MediaList mediaList={mediaList} onDeleteMedia={deleteMedia} />
+            </div>
+          </div>
+        )}
+
+        {activeTab === "profile" && (
+          <div className="content-section">
+            <div className="profile-card">
+              <div className="profile-header">
+                <div className="profile-avatar">B</div>
+                <div className="profile-info">
+                  <h3>{profile.name}</h3>
+                  <p>Productivity-focused planner</p>
+                </div>
+              </div>
+
+              <div className="profile-grid">
+                <label className="profile-box">
+                  <span>Name</span>
+                  <input
+                    type="text"
+                    value={profile.name}
+                    onChange={(e) =>
+                      handleProfileChange("name", e.target.value)
+                    }
+                  />
+                </label>
+
+                <label className="profile-box">
+                  <span>Email</span>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    onChange={(e) =>
+                      handleProfileChange("email", e.target.value)
+                    }
+                  />
+                </label>
+
+                <label className="profile-box">
+                  <span>Focus</span>
+                  <input
+                    type="text"
+                    value={profile.focus}
+                    onChange={(e) =>
+                      handleProfileChange("focus", e.target.value)
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="profile-actions">
+                <button type="button" className="secondary-btn">
+                  Cancel
+                </button>
+                <button type="button" className="primary-btn">
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
