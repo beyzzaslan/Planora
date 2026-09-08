@@ -17,7 +17,6 @@ Proje kapsamında görev yönetimi, özelleştirilebilir hatırlatıcılar, not 
 * AI Assistant
 * Bildirim sistemi
 * Docker
-* AWS deployment
 * React Native mobil uygulama
 
 ## 📌 Durum
