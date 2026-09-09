@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Uploaded user files
+uploads/
+
+# Local error logs
+backend-error.log

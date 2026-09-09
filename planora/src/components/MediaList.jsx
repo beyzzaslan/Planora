@@ -84,6 +84,15 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
   const cancelEditing = () => {
     setEditingId(null);
   };
+  const handleDelete = (media) => {
+    const confirmed = window.confirm(
+      `"${media.title}" kaynağını silmek istediğine emin misin?`,
+    );
+
+    if (confirmed) {
+      onDeleteMedia(media.id);
+    }
+  };
 
   const handleUpdate = async (event, media) => {
     event.preventDefault();
@@ -101,26 +110,8 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
   };
 
   return (
-    <div className="media-library">
-      <div className="media-filter-bar">
-        {filters.map((filter) => (
-          <button
-            type="button"
-            key={filter.id}
-            className={
-              activeFilter === filter.id
-                ? "media-filter-button active"
-                : "media-filter-button"
-            }
-            onClick={() => setActiveFilter(filter.id)}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="media-list">
-        {filteredMedia.map((media) => (
+    <div className="media-list">
+      {mediaList.map((media) => (
         <article className="media-card" key={media.id}>
           {editingId === media.id ? (
             <form
@@ -216,7 +207,7 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
                   <button
                     type="button"
                     className="media-delete-button"
-                    onClick={() => onDeleteMedia(media.id)}
+                    onClick={() => handleDelete(media)}
                     aria-label={`${media.title} kaynağını sil`}
                     title="Kaynağı sil"
                   >
@@ -237,8 +228,7 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
             </>
           )}
         </article>
-        ))}
-      </div>
+      ))}
     </div>
   );
 }

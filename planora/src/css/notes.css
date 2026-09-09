@@ -576,3 +576,147 @@
 .media-edit-actions button[type="submit"]:hover {
   background: #1d4ed8;
 }
+
+.media-mode-buttons {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px;
+  background: #f2f4f7;
+  border-radius: 11px;
+}
+
+.media-mode-buttons button {
+  padding: 8px 14px;
+  color: #667085;
+  font-size: 0.86rem;
+  font-weight: 700;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.media-mode-buttons button:hover {
+  color: #1d4ed8;
+  background: #ffffff;
+}
+
+.media-mode-buttons button.active {
+  color: #ffffff;
+  background: #2563eb;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.22);
+}
+
+.media-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.media-field > span {
+  color: #344054;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.media-field input,
+.media-field select {
+  width: 100%;
+  padding: 11px 12px;
+  color: #172033;
+  font: inherit;
+  background: #f8fafc;
+  border: 1px solid #dfe3ea;
+  border-radius: 10px;
+  box-sizing: border-box;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.media-field input:focus,
+.media-field select:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.media-field input[type="file"] {
+  padding: 8px;
+  color: #667085;
+  cursor: pointer;
+}
+
+.media-field input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 12px;
+  color: #1d4ed8;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: #eff6ff;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.media-field input[type="file"]::file-selector-button:hover {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.media-create > button[type="submit"] {
+  width: 100%;
+  padding: 11px 16px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  background: #2563eb;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.media-create > button[type="submit"]:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.media-feedback {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border: 1px solid;
+  border-radius: 10px;
+}
+
+.media-feedback.success {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.media-feedback.error {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fecdca;
+}
+
+.media-create > button[type="submit"]:disabled {
+  color: #ffffff;
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.75;
+  transform: none;
+}
+
+.media-create > button[type="submit"]:disabled:hover {
+  background: #94a3b8;
+  transform: none;
+}

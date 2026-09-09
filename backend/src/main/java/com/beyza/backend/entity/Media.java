@@ -32,7 +32,7 @@ public class Media {
     @Column(nullable = false)
     private String fileName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String fileUrl;
 
     @Column(nullable = false)

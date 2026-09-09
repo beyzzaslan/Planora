@@ -17,6 +17,28 @@ function App() {
   const [mediaList, setMediaList] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = "success") => {
+    setToast({
+      message,
+      type,
+    });
+  };
+
+  useEffect(() => {
+    if (!toast) return;
+
+    const timeoutId = setTimeout(() => {
+      setToast(null);
+    }, 3000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [toast]);
+
   const completedTodos = todos.filter(
     (todo) => todo.status === "COMPLETED",
   ).length;
@@ -33,6 +55,7 @@ function App() {
     media: { label: "Keep your references", title: "Media", icon: "🗂️" },
     profile: { label: "Your personal space", title: "Profile", icon: "👤" },
   };
+
   const [profile, setProfile] = useState({
     name: "Beyza",
     email: "beyza@example.com",
@@ -246,12 +269,35 @@ function App() {
     }
   };
 
+  const uploadMedia = async (title, file) => {
+    const formData = new FormData();
+
+    formData.append("title", title);
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/media/upload",
+        formData,
+      );
+
+      setMediaList((current) => [response.data, ...current]);
+      return true;
+    } catch (error) {
+      console.error("Dosya yüklenilemedi", error);
+      return false;
+    }
+  };
+
   const deleteMedia = async (id) => {
     try {
       await axios.delete(`http://localhost:8080/api/media/${id}`);
       setMediaList((current) => current.filter((media) => media.id !== id));
+      showToast("Kaynak başarıyla silindi.");
     } catch (error) {
-      console.error("Medya silinemedi", error);
+      console.error("Kaynak silinemedi:", error);
+
+      showToast("Kaynak silinemedi. Lütfen tekrar dene.", "error");
     }
   };
 
@@ -265,15 +311,39 @@ function App() {
       setMediaList((current) =>
         current.map((media) => (media.id === id ? response.data : media)),
       );
+      showToast("Kaynak başarıyla güncellendi");
       return true;
     } catch (error) {
       console.error("Kaynak güncellenemedi:", error);
+      showToast("Kaynak güncellenemedi. Lütfen tekrar dene.", "error");
+
       return false;
     }
   };
 
   return (
     <div className="app-shell">
+      {toast && (
+        <div
+          className={`app-toast ${toast.type}`}
+          role={toast.type === "error" ? "alert" : "status"}
+        >
+          <span className="app-toast-icon">
+            {toast.type === "error" ? "✕" : "✓"}
+          </span>
+
+          <span>{toast.message}</span>
+
+          <button
+            type="button"
+            className="app-toast-close"
+            onClick={() => setToast(null)}
+            aria-label="Bildirimi kapat"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark">P</div>
@@ -502,7 +572,10 @@ function App() {
         {activeTab === "media" && (
           <div className="content-section">
             <div className="media-section">
-              <MediaCreate onCreateMedia={createMedia} />
+              <MediaCreate
+                onCreateMedia={createMedia}
+                onUploadMedia={uploadMedia}
+              />
               <MediaList
                 mediaList={mediaList}
                 onDeleteMedia={deleteMedia}
