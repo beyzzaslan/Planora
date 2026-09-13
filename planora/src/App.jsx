@@ -38,8 +38,6 @@ function App() {
       clearTimeout(timeoutId);
     };
   }, [toast]);
-  w;
-
   const completedTodos = todos.filter(
     (todo) => todo.status === "COMPLETED",
   ).length;

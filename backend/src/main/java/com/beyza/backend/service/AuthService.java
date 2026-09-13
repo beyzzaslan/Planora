@@ -18,41 +18,54 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserAccountRepository userAccountRepository;
-    private final PasswordEncoder passwordEncoder;
+        private final UserAccountRepository userAccountRepository;
+        private final PasswordEncoder passwordEncoder;
 
-    @Transactional
-    public UserResponse register(RegisterRequest request) {
-        if (!Objects.equals(
-                request.password(),
-                request.confirmPassword())) {
+        @Transactional
+        public UserResponse register(RegisterRequest request) {
+                if (!Objects.equals(
+                                request.password(),
+                                request.confirmPassword())) {
 
-            throw new IllegalArgumentException(
-                    "Şifre ve şifre tekrarı eşleşmiyor.");
+                        throw new IllegalArgumentException(
+                                        "Şifre ve şifre tekrarı eşleşmiyor.");
+                }
+
+                String normalizedEmail = request.email()
+                                .trim()
+                                .toLowerCase(Locale.ROOT);
+
+                if (userAccountRepository
+                                .existsByEmailIgnoreCase(normalizedEmail)) {
+
+                        throw new IllegalStateException(
+                                        "Bu e-posta adresi zaten kullanılıyor.");
+                }
+
+                UserAccount user = new UserAccount();
+
+                user.setName(request.name().trim());
+                user.setEmail(normalizedEmail);
+                user.setPasswordHash(
+                                passwordEncoder.encode(request.password()));
+                user.setFocus("Daily");
+                user.setAvatarUrl(null);
+
+                UserAccount savedUser = userAccountRepository.save(user);
+
+                return UserResponse.from(savedUser);
         }
 
-        String normalizedEmail = request.email()
-                .trim()
-                .toLowerCase(Locale.ROOT);
+        @Transactional(readOnly = true)
+        public UserResponse getUserByEmail(String email) {
 
-        if (userAccountRepository
-                .existsByEmailIgnoreCase(normalizedEmail)) {
+                UserAccount user = userAccountRepository
+                                .findByEmailIgnoreCase(email.trim())
+                                .orElseThrow(() -> new IllegalStateException(
+                                                "Kullanıcı bulunamadı."));
 
-            throw new IllegalStateException(
-                    "Bu e-posta adresi zaten kullanılıyor.");
+                return UserResponse.from(user);
+                // bu metodu başarılı girişten sonra kullanıcının profil bilgilerini cevap
+                // olarak göndermek için kullanacağız.
         }
-
-        UserAccount user = new UserAccount();
-
-        user.setName(request.name().trim());
-        user.setEmail(normalizedEmail);
-        user.setPasswordHash(
-                passwordEncoder.encode(request.password()));
-        user.setFocus("Daily");
-        user.setAvatarUrl(null);
-
-        UserAccount savedUser = userAccountRepository.save(user);
-
-        return UserResponse.from(savedUser);
-    }
 }
