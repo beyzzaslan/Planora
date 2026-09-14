@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import axios from "axios";
+import apiClient from "./api/apiClient";
 import "./App.css";
+import "./css/auth.css";
 import ToDoCreate from "./components/ToDoCreate";
 import ToDoList from "./components/ToDoList";
 import "./css/notes.css";
@@ -9,6 +10,14 @@ import NoteList from "./components/NoteList";
 
 import MediaCreate from "./components/MediaCreate";
 import MediaList from "./components/MediaList";
+
+import AuthPage from "./components/auth/AuthPage";
+import {
+  getCurrentUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+} from "./api/authApi";
 function App() {
   const [todos, setTodos] = useState([]);
   const [reminders, setReminders] = useState([]);
@@ -17,7 +26,8 @@ function App() {
   const [mediaList, setMediaList] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = "success") => {
@@ -69,23 +79,25 @@ function App() {
   };
 
   useEffect(() => {
+    if (!currentUser) return;
+
     const getTasks = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/tasks");
+        const response = await apiClient.get("/tasks");
         setTodos(response.data);
       } catch (error) {
         console.error("Tasklar getirilemedi : ", error);
       }
     };
     getTasks();
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
+    if (!currentUser) return;
+
     const getReminders = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:8080/api/tasks/reminders",
-        );
+        const response = await apiClient.get("/tasks/reminders");
         setReminders(response.data); //Gelen veriler reminders state'ine kaydediliyor
 
         if ("Notification" in window && Notification.permission === "granted") {
@@ -126,7 +138,7 @@ function App() {
     return () => {
       clearInterval(reminderInterval);
     };
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
@@ -136,10 +148,7 @@ function App() {
 
   const createTodo = async (newTodo) => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/tasks",
-        newTodo,
-      );
+      const response = await apiClient.post("/tasks", newTodo);
       setTodos((currentTodos) => [...currentTodos, response.data]);
       return true;
     } catch (error) {
@@ -149,23 +158,22 @@ function App() {
   };
 
   useEffect(() => {
+    if (!currentUser) return;
+
     const fetchNotes = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/notes");
+        const response = await apiClient.get("/notes");
         setNotes(response.data);
       } catch (error) {
         console.error("Notlar getirilemedi: ", error);
       }
     };
     fetchNotes();
-  }, []);
+  }, [currentUser]);
 
   const createNote = async (newNote) => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/notes",
-        newNote,
-      );
+      const response = await apiClient.post("/notes", newNote);
       setNotes((current) => [response.data, ...current]);
       return true;
     } catch (error) {
@@ -176,10 +184,7 @@ function App() {
 
   const updateNote = async (id, updatedNote) => {
     try {
-      const response = await axios.put(
-        `http://localhost:8080/api/notes/${id}`,
-        updatedNote,
-      );
+      const response = await apiClient.put(`/notes/${id}`, updatedNote);
 
       setNotes((current) =>
         current.map((note) => (note.id === id ? response.data : note)),
@@ -194,7 +199,7 @@ function App() {
 
   const deleteNote = async (id) => {
     try {
-      await axios.delete(`http://localhost:8080/api/notes/${id}`);
+      await apiClient.delete(`/notes/${id}`);
       setNotes((current) => current.filter((note) => note.id !== id));
     } catch (error) {
       console.error("Not silinemedi", error);
@@ -203,9 +208,7 @@ function App() {
 
   const togglePin = async (id) => {
     try {
-      const response = await axios.patch(
-        `http://localhost:8080/api/notes/${id}/pin`,
-      );
+      const response = await apiClient.patch(`/notes/${id}/pin`);
       setNotes((current) =>
         current.map((note) => (note.id === id ? response.data : note)),
       );
@@ -216,7 +219,7 @@ function App() {
 
   const removeTodo = async (todoId) => {
     try {
-      await axios.delete(`http://localhost:8080/api/tasks/${todoId}`);
+      await apiClient.delete(`/tasks/${todoId}`);
       setTodos((currentTodos) =>
         currentTodos.filter((todo) => todo.id !== todoId),
       );
@@ -227,10 +230,7 @@ function App() {
 
   const updateTodo = async (id, updatedTodo) => {
     try {
-      const response = await axios.put(
-        `http://localhost:8080/api/tasks/${id}`,
-        updatedTodo,
-      );
+      const response = await apiClient.put(`/tasks/${id}`, updatedTodo);
       setTodos((currentTodos) =>
         currentTodos.map((todo) => (todo.id == id ? response.data : todo)),
       );
@@ -243,23 +243,22 @@ function App() {
   };
 
   useEffect(() => {
+    if (!currentUser) return;
+
     const fetchMedia = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/media");
+        const response = await apiClient.get("/media");
         setMediaList(response.data);
       } catch (error) {
         console.error("Media listesi getirilemedi:", error);
       }
     };
     fetchMedia();
-  }, []);
+  }, [currentUser]);
 
   const createMedia = async (newMedia) => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/media",
-        newMedia,
-      );
+      const response = await apiClient.post("/media", newMedia);
       setMediaList((current) => [response.data, ...current]);
       return true;
     } catch (error) {
@@ -275,10 +274,7 @@ function App() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/media/upload",
-        formData,
-      );
+      const response = await apiClient.post("/media/upload", formData);
 
       setMediaList((current) => [response.data, ...current]);
       return true;
@@ -290,7 +286,7 @@ function App() {
 
   const deleteMedia = async (id) => {
     try {
-      await axios.delete(`http://localhost:8080/api/media/${id}`);
+      await apiClient.delete(`/media/${id}`);
       setMediaList((current) => current.filter((media) => media.id !== id));
       showToast("Kaynak başarıyla silindi.");
     } catch (error) {
@@ -302,10 +298,7 @@ function App() {
 
   const updateMedia = async (id, updatedMedia) => {
     try {
-      const response = await axios.put(
-        `http://localhost:8080/api/media/${id}`,
-        updatedMedia,
-      );
+      const response = await apiClient.put(`/media/${id}`, updatedMedia);
 
       setMediaList((current) =>
         current.map((media) => (media.id === id ? response.data : media)),
@@ -319,6 +312,75 @@ function App() {
       return false;
     }
   };
+
+  useEffect(() => {
+    let isActive = true;
+
+    const checkSession = async () => {
+      try {
+        const user = await getCurrentUser();
+
+        if (isActive) {
+          setCurrentUser(user);
+        }
+      } catch (error) {
+        if (isActive && error.response?.status !== 401) {
+          console.error("Session kontrol edilemedi:", error);
+        }
+      } finally {
+        if (isActive) {
+          setIsAuthChecking(false);
+        }
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const handleLogin = async (loginData) => {
+    const user = await loginUser(loginData);
+    setCurrentUser(user);
+  };
+
+  const handleRegister = async (registerData) => {
+    await registerUser(registerData);
+
+    const user = await loginUser({
+      email: registerData.email,
+      password: registerData.password,
+    });
+
+    setCurrentUser(user);
+  };
+
+  const handleLogout = async () => {
+    setProfileMenuOpen(false);
+
+    try {
+      await logoutUser();
+
+      setCurrentUser(null);
+      setTodos([]);
+      setReminders([]);
+      setNotes([]);
+      setMediaList([]);
+    } catch (error) {
+      console.error("Çıkış yapılamadı:", error);
+      showToast("Çıkış yapılamadı. Lütfen tekrar deneyin.", "error");
+    }
+  };
+
+  if (isAuthChecking) {
+    return <div className="auth-loading">Planora yükleniyor...</div>;
+  }
+
+  if (!currentUser) {
+    return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />;
+  }
 
   return (
     <div className="app-shell">
@@ -438,12 +500,7 @@ function App() {
                   >
                     Settings
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                    }}
-                  >
+                  <button type="button" onClick={handleLogout}>
                     Sign out
                   </button>
                 </div>
