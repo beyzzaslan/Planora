@@ -18,6 +18,9 @@ import {
   logoutUser,
   registerUser,
 } from "./api/authApi";
+import ProfilePage from "./components/ProfilePage";
+import "./css/profile.css";
+import { updateProfile } from "./api/profileApi";
 function App() {
   const [todos, setTodos] = useState([]);
   const [reminders, setReminders] = useState([]);
@@ -26,7 +29,6 @@ function App() {
   const [mediaList, setMediaList] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [toast, setToast] = useState(null);
 
@@ -65,19 +67,15 @@ function App() {
     profile: { label: "Your personal space", title: "Profile", icon: "👤" },
   };
 
-  const [profile, setProfile] = useState({
-    name: "Beyza",
-    email: "beyza@example.com",
-    focus: "Daily",
-  });
+  const [currentUser, setCurrentUser] = useState(null);
+  const handleSaveProfile = async (profileData) => {
+    const updatedUser = await updateProfile(profileData);
 
-  const handleProfileChange = (field, value) => {
-    setProfile((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    setCurrentUser(updatedUser);
+    showToast("Profil başarıyla güncellendi.");
+
+    return updatedUser;
   };
-
   useEffect(() => {
     if (!currentUser) return;
 
@@ -477,7 +475,7 @@ function App() {
                 className="profile-badge"
                 onClick={() => setProfileMenuOpen((current) => !current)}
               >
-                B
+                {currentUser.name?.trim().charAt(0).toUpperCase() || "?"}
               </button>
 
               {profileMenuOpen && (
@@ -643,59 +641,7 @@ function App() {
 
         {activeTab === "profile" && (
           <div className="content-section">
-            <div className="profile-card">
-              <div className="profile-header">
-                <div className="profile-avatar">B</div>
-                <div className="profile-info">
-                  <h3>{profile.name}</h3>
-                  <p>Productivity-focused planner</p>
-                </div>
-              </div>
-
-              <div className="profile-grid">
-                <label className="profile-box">
-                  <span>Name</span>
-                  <input
-                    type="text"
-                    value={profile.name}
-                    onChange={(e) =>
-                      handleProfileChange("name", e.target.value)
-                    }
-                  />
-                </label>
-
-                <label className="profile-box">
-                  <span>Email</span>
-                  <input
-                    type="email"
-                    value={profile.email}
-                    onChange={(e) =>
-                      handleProfileChange("email", e.target.value)
-                    }
-                  />
-                </label>
-
-                <label className="profile-box">
-                  <span>Focus</span>
-                  <input
-                    type="text"
-                    value={profile.focus}
-                    onChange={(e) =>
-                      handleProfileChange("focus", e.target.value)
-                    }
-                  />
-                </label>
-              </div>
-
-              <div className="profile-actions">
-                <button type="button" className="secondary-btn">
-                  Cancel
-                </button>
-                <button type="button" className="primary-btn">
-                  Save Changes
-                </button>
-              </div>
-            </div>
+            <ProfilePage user={currentUser} onSaveProfile={handleSaveProfile} />
           </div>
         )}
       </main>
