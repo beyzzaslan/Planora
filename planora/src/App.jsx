@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import apiClient from "./api/apiClient";
 import "./App.css";
 import "./css/auth.css";
@@ -90,53 +90,56 @@ function App() {
     getTasks();
   }, [currentUser]);
 
+  const refreshReminders = useCallback(async () => {
+    try {
+      const response = await apiClient.get("/tasks/reminders");
+      setReminders(response.data);
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        const now = new Date();
+
+        response.data.forEach((reminder) => {
+          const taskDateTime = new Date(
+            `${reminder.taskDate}T${reminder.taskTime}`,
+          );
+
+          const reminderDateTime = new Date(
+            taskDateTime.getTime() - reminder.reminderOffset * 60 * 1000,
+          );
+
+          const reminderIsDue = reminderDateTime <= now;
+          const taskHasNotPassed = taskDateTime > now;
+          const reminderKey = `${reminder.id}-${reminder.taskDate}-${reminder.taskTime}`;
+
+          if (
+            reminderIsDue &&
+            taskHasNotPassed &&
+            !notifiedReminderIds.current.has(reminderKey)
+          ) {
+            new Notification("Planora Hatırlatıcısı", {
+              body: `${reminder.content} - ${reminder.reminderOffset} dakika kaldı`,
+            });
+
+            notifiedReminderIds.current.add(reminderKey);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Hatırlatıcılar getirilemedi : ", error);
+    }
+  }, []);
+
   useEffect(() => {
     if (!currentUser) return;
 
-    const getReminders = async () => {
-      try {
-        const response = await apiClient.get("/tasks/reminders");
-        setReminders(response.data); //Gelen veriler reminders state'ine kaydediliyor
+    const initialReminderTimeout = setTimeout(refreshReminders, 0);
+    const reminderInterval = setInterval(refreshReminders, 60000);
 
-        if ("Notification" in window && Notification.permission === "granted") {
-          const now = new Date();
-
-          response.data.forEach((reminder) => {
-            const taskDateTime = new Date(
-              `${reminder.taskDate}T${reminder.taskTime}`,
-            );
-
-            const reminderDateTime = new Date(
-              taskDateTime.getTime() - reminder.reminderOffset * 60 * 1000,
-            );
-
-            const reminderIsDue = reminderDateTime <= now;
-            const taskHasNotPassed = taskDateTime > now;
-            const reminderKey = `${reminder.id}-${reminder.taskDate}-${reminder.taskTime}`;
-
-            if (
-              reminderIsDue &&
-              taskHasNotPassed &&
-              !notifiedReminderIds.current.has(reminderKey)
-            ) {
-              new Notification("Planora Hatırlatıcısı", {
-                body: `${reminder.content} - ${reminder.reminderOffset} dakika kaldı`,
-              });
-
-              notifiedReminderIds.current.add(reminderKey);
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Hatırlatıcılar getirilemedi : ", error);
-      }
-    };
-    getReminders();
-    const reminderInterval = setInterval(getReminders, 60000); // 1 dakika aralıklarla hatırlatıcıları güncelle
     return () => {
+      clearTimeout(initialReminderTimeout);
       clearInterval(reminderInterval);
     };
-  }, [currentUser]);
+  }, [currentUser, refreshReminders]);
 
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
@@ -148,6 +151,7 @@ function App() {
     try {
       const response = await apiClient.post("/tasks", newTodo);
       setTodos((currentTodos) => [...currentTodos, response.data]);
+      refreshReminders();
       return true;
     } catch (error) {
       console.error("Task oluşturulamadı", error);
@@ -221,6 +225,7 @@ function App() {
       setTodos((currentTodos) =>
         currentTodos.filter((todo) => todo.id !== todoId),
       );
+      refreshReminders();
     } catch (error) {
       console.error("Task silinemedi:", error);
     }
@@ -232,6 +237,7 @@ function App() {
       setTodos((currentTodos) =>
         currentTodos.map((todo) => (todo.id == id ? response.data : todo)),
       );
+      refreshReminders();
       return true;
     } catch (error) {
       console.error("Task güncellenemedi:", error);
