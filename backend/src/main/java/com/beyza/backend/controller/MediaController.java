@@ -21,6 +21,8 @@ import com.beyza.backend.entity.Media;
 import com.beyza.backend.service.MediaService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -31,32 +33,49 @@ public class MediaController {
     private final MediaService mediaService;
 
     @GetMapping
-    public List<Media> getAllMedia() {
-        return mediaService.getAllMedia();
+    public List<Media> getAllMedia(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return mediaService.getAllMedia(
+                userDetails.getUsername());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Media> getMediaById(@PathVariable Long id) {
-        return mediaService.getMediaById(id)
+    public ResponseEntity<Media> getMediaById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return mediaService
+                .getMediaById(id, userDetails.getUsername())
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
-
     }
 
     @PostMapping
-    public ResponseEntity<Media> createMedia(@RequestBody Media media) {
-        Media createdMedia = mediaService.createMedia(media);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdMedia);
+    public ResponseEntity<Media> createMedia(
+            @RequestBody Media media,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
+        Media createdMedia = mediaService.createMedia(
+                media,
+                userDetails.getUsername());
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(createdMedia);
     }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public ResponseEntity<?> uploadMedia(
             @RequestParam String title,
-            @RequestParam MultipartFile file) {
+            @RequestParam MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         try {
-            Media uploadedMedia = mediaService.uploadMedia(title, file);
+            Media uploadedMedia = mediaService.uploadMedia(
+                    title,
+                    file,
+                    userDetails.getUsername());
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -75,16 +94,29 @@ public class MediaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Media> updateMedia(@PathVariable Long id, @RequestBody Media updatedMedia) {
-        return mediaService.updateMedia(id, updatedMedia)
+    public ResponseEntity<Media> updateMedia(
+            @PathVariable Long id,
+            @RequestBody Media updatedMedia,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return mediaService
+                .updateMedia(
+                        id,
+                        updatedMedia,
+                        userDetails.getUsername())
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMedia(@PathVariable Long id) {
+    public ResponseEntity<?> deleteMedia(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
         try {
-            boolean deleted = mediaService.deleteMedia(id);
+            boolean deleted = mediaService.deleteMedia(
+                    id,
+                    userDetails.getUsername());
 
             if (!deleted) {
                 return ResponseEntity.notFound().build();

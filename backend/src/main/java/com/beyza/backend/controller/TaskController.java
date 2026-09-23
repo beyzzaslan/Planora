@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,43 +29,75 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping
-    public List<Task> getAllTasks() {
-        return taskService.getAllTasks();
+    public List<Task> getAllTasks(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return taskService.getAllTasks(
+                userDetails.getUsername());
     }
 
     @GetMapping("/reminders")
-    public List<Task> getUpcomingReminders() {
-        return taskService.getUpcomingReminders();
+    public List<Task> getUpcomingReminders(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return taskService.getUpcomingReminders(
+                userDetails.getUsername());
     }
 
-    @GetMapping("/{id}") // optional ile yazdıgımız ıcın varsa veya yoksa durumunu da yazıyoruz
-    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
-        return taskService.getTaskById(id).map(ResponseEntity::ok)
+    @GetMapping("/{id}")
+    public ResponseEntity<Task> getTaskById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return taskService
+                .getTaskById(id, userDetails.getUsername())
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        Task createdTask = taskService.createTask(task);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+    public ResponseEntity<Task> createTask(
+            @RequestBody Task task,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
+        Task createdTask = taskService.createTask(
+                task,
+                userDetails.getUsername());
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(createdTask);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task updatedTask) {
-        return taskService.updateTask(id, updatedTask)
+    public ResponseEntity<Task> updateTask(
+            @PathVariable Long id,
+            @RequestBody Task updatedTask,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return taskService
+                .updateTask(
+                        id,
+                        updatedTask,
+                        userDetails.getUsername())
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-        boolean deleted = taskService.deleteTask(id);
+    public ResponseEntity<Void> deleteTask(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        boolean deleted = taskService.deleteTask(
+                id,
+                userDetails.getUsername());
+
         if (!deleted) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.noContent().build();
 
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,154 +16,235 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.beyza.backend.entity.Media;
+import com.beyza.backend.entity.UserAccount;
 import com.beyza.backend.repository.MediaRepository;
+import com.beyza.backend.repository.UserAccountRepository;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class MediaService {
-    private static final String LOCAL_UPLOAD_URL = "http://localhost:8080/uploads/";
-    private final MediaRepository mediaRepository;
 
-    @Value("${app.upload.dir}")
-    private String uploadDir;
+        private static final String LOCAL_UPLOAD_URL = "http://localhost:8080/uploads/";
 
-    public List<Media> getAllMedia() {
-        return mediaRepository.findAll();
-    }
+        private final MediaRepository mediaRepository;
+        private final UserAccountRepository userAccountRepository;
 
-    public Optional<Media> getMediaById(Long id) {
-        return mediaRepository.findById(id);
-    }
+        @Value("${app.upload.dir}")
+        private String uploadDir;
 
-    public Media createMedia(Media media) {
-        return mediaRepository.save(media);
-    }
+        public List<Media> getAllMedia(
+                        String authenticatedEmail) {
 
-    public Media uploadMedia(String title, MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Dosya boş olamaz.");
+                return mediaRepository
+                                .findAllByOwner_EmailIgnoreCaseOrderByIdDesc(
+                                                authenticatedEmail.trim());
         }
 
-        String originalFileName = StringUtils.cleanPath(
-                file.getOriginalFilename() == null
-                        ? "file"
-                        : file.getOriginalFilename());
+        public Optional<Media> getMediaById(
+                        Long id,
+                        String authenticatedEmail) {
 
-        if (originalFileName.contains("..")) {
-            throw new IllegalArgumentException("Geçersiz dosya adı.");
+                return mediaRepository
+                                .findByIdAndOwner_EmailIgnoreCase(
+                                                id,
+                                                authenticatedEmail.trim());
         }
 
-        String lowerFileName = originalFileName.toLowerCase();
+        public Media createMedia(
+                        Media media,
+                        String authenticatedEmail) {
 
-        String extension;
-        String contentType;
+                UserAccount owner = getAuthenticatedUser(
+                                authenticatedEmail);
 
-        if (lowerFileName.endsWith(".jpg")
-                || lowerFileName.endsWith(".jpeg")) {
-            extension = ".jpg";
-            contentType = "image/jpeg";
+                media.setId(null);
+                media.setOwner(owner);
 
-        } else if (lowerFileName.endsWith(".png")) {
-            extension = ".png";
-            contentType = "image/png";
-
-        } else if (lowerFileName.endsWith(".webp")) {
-            extension = ".webp";
-            contentType = "image/webp";
-
-        } else if (lowerFileName.endsWith(".mp4")) {
-            extension = ".mp4";
-            contentType = "video/mp4";
-
-        } else if (lowerFileName.endsWith(".pdf")) {
-            extension = ".pdf";
-            contentType = "application/pdf";
-
-        } else {
-            throw new IllegalArgumentException(
-                    "Yalnızca JPG, PNG, WebP, MP4 ve PDF yükleyebilirsin.");
+                return mediaRepository.save(media);
         }
 
-        String storedFileName = UUID.randomUUID() + extension;
+        public Media uploadMedia(
+                        String title,
+                        MultipartFile file,
+                        String authenticatedEmail) throws IOException {
 
-        Path uploadPath = Paths.get(uploadDir)
-                .toAbsolutePath()
-                .normalize();
+                if (file.isEmpty()) {
+                        throw new IllegalArgumentException(
+                                        "Dosya boş olamaz.");
+                }
 
-        Files.createDirectories(uploadPath);
+                UserAccount owner = getAuthenticatedUser(
+                                authenticatedEmail);
 
-        Path targetPath = uploadPath
-                .resolve(storedFileName)
-                .normalize();
+                String originalFileName = StringUtils.cleanPath(
+                                file.getOriginalFilename() == null
+                                                ? "file"
+                                                : file.getOriginalFilename());
 
-        if (!targetPath.startsWith(uploadPath)) {
-            throw new IllegalArgumentException("Geçersiz dosya yolu.");
+                if (originalFileName.contains("..")) {
+                        throw new IllegalArgumentException(
+                                        "Geçersiz dosya adı.");
+                }
+
+                String lowerFileName = originalFileName
+                                .toLowerCase(Locale.ROOT);
+
+                String extension;
+                String contentType;
+
+                if (lowerFileName.endsWith(".jpg")
+                                || lowerFileName.endsWith(".jpeg")) {
+
+                        extension = ".jpg";
+                        contentType = "image/jpeg";
+
+                } else if (lowerFileName.endsWith(".png")) {
+
+                        extension = ".png";
+                        contentType = "image/png";
+
+                } else if (lowerFileName.endsWith(".webp")) {
+
+                        extension = ".webp";
+                        contentType = "image/webp";
+
+                } else if (lowerFileName.endsWith(".mp4")) {
+
+                        extension = ".mp4";
+                        contentType = "video/mp4";
+
+                } else if (lowerFileName.endsWith(".pdf")) {
+
+                        extension = ".pdf";
+                        contentType = "application/pdf";
+
+                } else {
+                        throw new IllegalArgumentException(
+                                        "Yalnızca JPG, PNG, WebP, MP4 ve PDF yükleyebilirsin.");
+                }
+
+                String storedFileName = UUID.randomUUID()
+                                + extension;
+
+                Path uploadPath = Paths.get(uploadDir)
+                                .toAbsolutePath()
+                                .normalize();
+
+                Files.createDirectories(uploadPath);
+
+                Path targetPath = uploadPath
+                                .resolve(storedFileName)
+                                .normalize();
+
+                if (!targetPath.startsWith(uploadPath)) {
+                        throw new IllegalArgumentException(
+                                        "Geçersiz dosya yolu.");
+                }
+
+                Files.copy(
+                                file.getInputStream(),
+                                targetPath,
+                                StandardCopyOption.REPLACE_EXISTING);
+
+                Media media = new Media();
+
+                media.setTitle(title.trim());
+                media.setFileName(originalFileName);
+                media.setFileUrl(
+                                LOCAL_UPLOAD_URL + storedFileName);
+                media.setMediaType(contentType);
+                media.setOwner(owner);
+
+                return mediaRepository.save(media);
         }
 
-        Files.copy(
-                file.getInputStream(),
-                targetPath,
-                StandardCopyOption.REPLACE_EXISTING);
+        public Optional<Media> updateMedia(
+                        Long id,
+                        Media updatedMedia,
+                        String authenticatedEmail) {
 
-        Media media = new Media();
-        media.setTitle(title.trim());
-        media.setFileName(originalFileName);
-        media.setFileUrl(LOCAL_UPLOAD_URL + storedFileName);
-        media.setMediaType(contentType);
+                return mediaRepository
+                                .findByIdAndOwner_EmailIgnoreCase(
+                                                id,
+                                                authenticatedEmail.trim())
+                                .map(existingMedia -> {
+                                        existingMedia.setTitle(
+                                                        updatedMedia.getTitle());
 
-        return mediaRepository.save(media);
-    }
+                                        existingMedia.setFileName(
+                                                        updatedMedia.getFileName());
 
-    public Optional<Media> updateMedia(Long id, Media updatedMedia) {
-        return mediaRepository.findById(id).map(existing -> {
-            existing.setTitle(updatedMedia.getTitle());
-            existing.setFileName(updatedMedia.getFileName());
-            existing.setFileUrl(updatedMedia.getFileUrl());
-            existing.setMediaType(updatedMedia.getMediaType());
-            return mediaRepository.save(existing);
+                                        existingMedia.setFileUrl(
+                                                        updatedMedia.getFileUrl());
 
-        });
-    }
+                                        existingMedia.setMediaType(
+                                                        updatedMedia.getMediaType());
 
-    public boolean deleteMedia(Long id) throws IOException {
-        Optional<Media> mediaOptional = mediaRepository.findById(id);
-
-        if (mediaOptional.isEmpty()) {
-            return false;
+                                        return mediaRepository.save(
+                                                        existingMedia);
+                                });
         }
 
-        Media media = mediaOptional.get();
+        public boolean deleteMedia(
+                        Long id,
+                        String authenticatedEmail) throws IOException {
 
-        deleteUploadedFile(media);
+                Optional<Media> mediaOptional = mediaRepository
+                                .findByIdAndOwner_EmailIgnoreCase(
+                                                id,
+                                                authenticatedEmail.trim());
 
-        mediaRepository.delete(media);
-        return true;
-    }
+                if (mediaOptional.isEmpty()) {
+                        return false;
+                }
 
-    private void deleteUploadedFile(Media media) throws IOException {
-        String fileUrl = media.getFileUrl();
+                Media media = mediaOptional.get();
 
-        if (fileUrl == null || !fileUrl.startsWith(LOCAL_UPLOAD_URL)) {
-            return;
+                deleteUploadedFile(media);
+                mediaRepository.delete(media);
+
+                return true;
         }
 
-        String storedFileName = fileUrl.substring(LOCAL_UPLOAD_URL.length());
+        private UserAccount getAuthenticatedUser(
+                        String authenticatedEmail) {
 
-        Path uploadPath = Paths.get(uploadDir)
-                .toAbsolutePath()
-                .normalize();
-
-        Path filePath = uploadPath
-                .resolve(storedFileName)
-                .normalize();
-
-        if (!filePath.startsWith(uploadPath)) {
-            throw new IllegalArgumentException("Geçersiz dosya yolu.");
+                return userAccountRepository
+                                .findByEmailIgnoreCase(
+                                                authenticatedEmail.trim())
+                                .orElseThrow(() -> new IllegalStateException(
+                                                "Kullanıcı bulunamadı."));
         }
 
-        Files.deleteIfExists(filePath);
-    }
+        private void deleteUploadedFile(
+                        Media media) throws IOException {
 
+                String fileUrl = media.getFileUrl();
+
+                if (fileUrl == null
+                                || !fileUrl.startsWith(LOCAL_UPLOAD_URL)) {
+
+                        return;
+                }
+
+                String storedFileName = fileUrl.substring(
+                                LOCAL_UPLOAD_URL.length());
+
+                Path uploadPath = Paths.get(uploadDir)
+                                .toAbsolutePath()
+                                .normalize();
+
+                Path filePath = uploadPath
+                                .resolve(storedFileName)
+                                .normalize();
+
+                if (!filePath.startsWith(uploadPath)) {
+                        throw new IllegalArgumentException(
+                                        "Geçersiz dosya yolu.");
+                }
+
+                Files.deleteIfExists(filePath);
+        }
 }
