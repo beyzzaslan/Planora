@@ -1,10 +1,17 @@
 package com.beyza.backend.controller;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +28,6 @@ import com.beyza.backend.entity.Media;
 import com.beyza.backend.service.MediaService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -50,6 +55,50 @@ public class MediaController {
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/{id}/file")
+public ResponseEntity<?> getMediaFile(
+        @PathVariable Long id,
+        @AuthenticationPrincipal UserDetails userDetails) {
+
+    try {
+        Optional<MediaService.StoredMediaFile> fileOptional =
+                mediaService.getMediaFile(
+                        id,
+                        userDetails.getUsername());
+
+        if (fileOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        MediaService.StoredMediaFile storedFile =
+                fileOptional.get();
+
+        String contentDisposition = ContentDisposition
+                .inline()
+                .filename(
+                        storedFile.originalFileName(),
+                        StandardCharsets.UTF_8)
+                .build()
+                .toString();
+
+        return ResponseEntity
+                .ok()
+                .contentType(
+                        MediaType.parseMediaType(
+                                storedFile.contentType()))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        contentDisposition)
+                .body(storedFile.resource());
+
+    } catch (IOException exception) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Dosya okunurken bir hata oluştu.");
+    }
+}
+
 
     @PostMapping
     public ResponseEntity<Media> createMedia(

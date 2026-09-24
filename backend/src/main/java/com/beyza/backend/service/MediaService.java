@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +42,59 @@ public class MediaService {
                 return mediaRepository
                                 .findAllByOwner_EmailIgnoreCaseOrderByIdDesc(
                                                 authenticatedEmail.trim());
+        }
+
+        public Optional<StoredMediaFile> getMediaFile(
+                        Long id,
+                        String authenticatedEmail) throws IOException {
+
+                Optional<Media> mediaOptional = mediaRepository
+                                .findByIdAndOwner_EmailIgnoreCase(
+                                                id,
+                                                authenticatedEmail.trim());
+
+                if (mediaOptional.isEmpty()) {
+                        return Optional.empty();
+                }
+
+                Media media = mediaOptional.get();
+                String fileUrl = media.getFileUrl();
+
+                if (fileUrl == null
+                                || !fileUrl.startsWith(LOCAL_UPLOAD_URL)) {
+
+                        return Optional.empty();
+                }
+
+                String storedFileName = fileUrl.substring(
+                                LOCAL_UPLOAD_URL.length());
+
+                Path uploadPath = Paths.get(uploadDir)
+                                .toAbsolutePath()
+                                .normalize();
+
+                Path filePath = uploadPath
+                                .resolve(storedFileName)
+                                .normalize();
+
+                if (!filePath.startsWith(uploadPath)
+                                || !Files.isRegularFile(filePath)) {
+
+                        return Optional.empty();
+                }
+
+                Resource resource = new UrlResource(
+                                filePath.toUri());
+
+                if (!resource.isReadable()) {
+                        return Optional.empty();
+                }
+
+                return Optional.of(
+                                new StoredMediaFile(
+                                                resource,
+                                                media.getMediaType(),
+                                                media.getFileName()));
         }
 
         public Optional<Media> getMediaById(
@@ -246,5 +301,11 @@ public class MediaService {
                 }
 
                 Files.deleteIfExists(filePath);
+        }
+
+        public record StoredMediaFile(
+                        Resource resource,
+                        String contentType,
+                        String originalFileName) {
         }
 }

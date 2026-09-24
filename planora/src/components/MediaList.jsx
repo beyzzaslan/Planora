@@ -6,7 +6,7 @@ import {
   FiTrash2,
   FiVideo,
 } from "react-icons/fi";
-
+import { API_BASE_URL } from "../api/apiClient";
 function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -34,12 +34,23 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
     return media.mediaType === "text/html";
   });
 
+  const getMediaAccessUrl = (media) => {
+  const isUploadedFile = media.fileUrl?.startsWith(
+    "http://localhost:8080/uploads/",
+  );
+
+  if (isUploadedFile) {
+    return `${API_BASE_URL}/media/${media.id}/file`;
+  }
+
+  return media.fileUrl;
+};
   const getMediaPreview = (media) => {
     if (media.mediaType.startsWith("image/")) {
       return (
         <img
           className="media-image-preview"
-          src={media.fileUrl}
+          src={getMediaAccessUrl(media)}
           alt={media.title}
         />
       );
@@ -218,7 +229,7 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
 
               <a
                 className="media-open-link"
-                href={media.fileUrl}
+                href={getMediaAccessUrl(media)}
                 target="_blank"
                 rel="noreferrer"
               >
