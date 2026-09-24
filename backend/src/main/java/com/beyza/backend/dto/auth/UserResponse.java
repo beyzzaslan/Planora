@@ -10,10 +10,15 @@ public record UserResponse(
         String avatarUrl) {
 
     public static UserResponse from(UserAccount user) {
+        String avatarUrl = user.getAvatarFileName() == null
+                ? null
+                : "/profile/avatar";
+
         return new UserResponse(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getFocus(), user.getAvatarUrl());
+                user.getFocus(),
+                avatarUrl);
     }
 }

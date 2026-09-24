@@ -20,7 +20,12 @@ import {
 } from "./api/authApi";
 import ProfilePage from "./components/ProfilePage";
 import "./css/profile.css";
-import { updateProfile } from "./api/profileApi";
+import {
+  buildProfileAvatarUrl,
+  updateProfile,
+  uploadProfileAvatar,
+} from "./api/profileApi";
+
 function App() {
   const [todos, setTodos] = useState([]);
   const [reminders, setReminders] = useState([]);
@@ -68,6 +73,13 @@ function App() {
   };
 
   const [currentUser, setCurrentUser] = useState(null);
+
+  const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
+
+  const profileAvatarUrl = buildProfileAvatarUrl(
+    currentUser?.avatarUrl,
+    avatarVersion,
+  );
   const handleSaveProfile = async (profileData) => {
     const updatedUser = await updateProfile(profileData);
 
@@ -76,6 +88,18 @@ function App() {
 
     return updatedUser;
   };
+
+  const handleUploadAvatar = async (file) => {
+    const updatedUser = await uploadProfileAvatar(file);
+
+    setCurrentUser(updatedUser);
+    setAvatarVersion(Date.now());
+
+    showToast("Profil fotoğrafı başarıyla güncellendi.");
+
+    return updatedUser;
+  };
+
   useEffect(() => {
     if (!currentUser) return;
 
@@ -481,7 +505,14 @@ function App() {
                 className="profile-badge"
                 onClick={() => setProfileMenuOpen((current) => !current)}
               >
-                {currentUser.name?.trim().charAt(0).toUpperCase() || "?"}
+                {profileAvatarUrl ? (
+                  <img
+                    src={profileAvatarUrl}
+                    alt={`${currentUser.name} profil fotoğrafı`}
+                  />
+                ) : (
+                  currentUser.name?.trim().charAt(0).toUpperCase() || "?"
+                )}
               </button>
 
               {profileMenuOpen && (
@@ -647,7 +678,12 @@ function App() {
 
         {activeTab === "profile" && (
           <div className="content-section">
-            <ProfilePage user={currentUser} onSaveProfile={handleSaveProfile} />
+            <ProfilePage
+              user={currentUser}
+              avatarUrl={profileAvatarUrl}
+              onSaveProfile={handleSaveProfile}
+              onUploadAvatar={handleUploadAvatar}
+            />{" "}
           </div>
         )}
       </main>

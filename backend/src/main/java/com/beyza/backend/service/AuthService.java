@@ -49,8 +49,7 @@ public class AuthService {
                 user.setPasswordHash(
                                 passwordEncoder.encode(request.password()));
                 user.setFocus("Daily");
-                user.setAvatarUrl(null);
-
+                user.setAvatarFileName(null);
                 UserAccount savedUser = userAccountRepository.save(user);
 
                 return UserResponse.from(savedUser);

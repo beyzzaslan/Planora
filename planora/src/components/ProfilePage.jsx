@@ -1,6 +1,6 @@
-import { useState } from "react";
-
-function ProfilePage({ user, onSaveProfile }) {
+import { useRef, useState } from "react";
+import { FiCamera } from "react-icons/fi";
+function ProfilePage({ user, avatarUrl, onSaveProfile, onUploadAvatar }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -17,6 +17,48 @@ function ProfilePage({ user, onSaveProfile }) {
       ...currentForm,
       [name]: value,
     }));
+  };
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError("Profil fotoğrafı JPG, PNG veya WebP olmalıdır.");
+      event.target.value = "";
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      setError("Profil fotoğrafı en fazla 5 MB olabilir.");
+      event.target.value = "";
+      return;
+    }
+
+    setError("");
+    setIsUploadingAvatar(true);
+
+    try {
+      await onUploadAvatar(file);
+    } catch (requestError) {
+      const responseData = requestError.response?.data;
+
+      setError(
+        typeof responseData === "string"
+          ? responseData
+          : responseData?.message || "Profil fotoğrafı yüklenemedi.",
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+      event.target.value = "";
+    }
   };
 
   const handleCancel = () => {
@@ -50,18 +92,42 @@ function ProfilePage({ user, onSaveProfile }) {
 
   const firstLetter = user.name?.trim().charAt(0).toUpperCase() || "?";
 
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const avatarInputRef = useRef(null);
   return (
     <section className="profile-page">
       <div className="profile-cover" />
 
       <div className="profile-main-card">
         <div className="profile-identity">
-          <div className="profile-avatar-large">
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} />
-            ) : (
-              <span>{firstLetter}</span>
-            )}
+          <div className="profile-avatar-wrapper">
+            <div className="profile-avatar-large">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={`${user.name} profil fotoğrafı`} />
+              ) : (
+                <span>{firstLetter}</span>
+              )}
+            </div>
+
+            <input
+              ref={avatarInputRef}
+              className="profile-avatar-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAvatarChange}
+            />
+
+            <button
+              type="button"
+              className="profile-avatar-upload-button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={isUploadingAvatar || isSaving}
+              aria-label="Profil fotoğrafını değiştir"
+              title="Profil fotoğrafını değiştir"
+            >
+              {isUploadingAvatar ? "…" : <FiCamera />}
+            </button>
           </div>
 
           <div className="profile-identity-text">

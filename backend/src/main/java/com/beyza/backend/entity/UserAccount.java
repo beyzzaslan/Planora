@@ -38,8 +38,8 @@ public class UserAccount {
     @Column(length = 100)
     private String focus;
 
-    @Column(columnDefinition = "TEXT")
-    private String avatarUrl;
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
+    private String avatarFileName;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
