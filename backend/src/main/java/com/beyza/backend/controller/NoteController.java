@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,20 +16,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.beyza.backend.entity.Note;
+import com.beyza.backend.dto.note.CreateNoteRequest;
+import com.beyza.backend.dto.note.NoteResponse;
+import com.beyza.backend.dto.note.UpdateNoteRequest;
 import com.beyza.backend.service.NoteService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/notes")
 @RequiredArgsConstructor
 public class NoteController {
+
     private final NoteService noteService;
 
     @GetMapping
-    public List<Note> getAllNotes(
+    public List<NoteResponse> getAllNotes(
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return noteService.getAllNotes(
@@ -38,24 +40,28 @@ public class NoteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Note> getNoteById(
+    public ResponseEntity<NoteResponse> getNoteById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return noteService
-                .getNoteById(id, userDetails.getUsername())
+                .getNoteById(
+                        id,
+                        userDetails.getUsername())
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseGet(() ->
+                        ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Note> createNote(
-            @RequestBody Note note,
+    public ResponseEntity<NoteResponse> createNote(
+            @Valid @RequestBody CreateNoteRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Note createdNote = noteService.createNote(
-                note,
-                userDetails.getUsername());
+        NoteResponse createdNote =
+                noteService.createNote(
+                        request,
+                        userDetails.getUsername());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -63,29 +69,33 @@ public class NoteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Note> updateNote(
+    public ResponseEntity<NoteResponse> updateNote(
             @PathVariable Long id,
-            @RequestBody Note updatedNote,
+            @Valid @RequestBody UpdateNoteRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return noteService
                 .updateNote(
                         id,
-                        updatedNote,
+                        request,
                         userDetails.getUsername())
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseGet(() ->
+                        ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/pin")
-    public ResponseEntity<Note> togglePin(
+    public ResponseEntity<NoteResponse> togglePin(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return noteService
-                .togglePin(id, userDetails.getUsername())
+                .togglePin(
+                        id,
+                        userDetails.getUsername())
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseGet(() ->
+                        ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")

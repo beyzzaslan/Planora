@@ -12,7 +12,6 @@ function NoteItem({ note, onDeleteNote, onUpdateNote, onTogglePin }) {
       title: title.trim(),
       content: content.trim(),
       color,
-      pinned: note.pinned,
     };
 
     const updated = await onUpdateNote(note.id, payload);
