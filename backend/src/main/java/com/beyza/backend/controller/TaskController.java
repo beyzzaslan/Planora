@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,20 +15,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.beyza.backend.entity.Task;
+import com.beyza.backend.dto.task.CreateTaskRequest;
+import com.beyza.backend.dto.task.TaskResponse;
+import com.beyza.backend.dto.task.UpdateTaskRequest;
 import com.beyza.backend.service.TaskService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
 public class TaskController {
+
     private final TaskService taskService;
 
     @GetMapping
-    public List<Task> getAllTasks(
+    public List<TaskResponse> getAllTasks(
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return taskService.getAllTasks(
@@ -37,7 +39,7 @@ public class TaskController {
     }
 
     @GetMapping("/reminders")
-    public List<Task> getUpcomingReminders(
+    public List<TaskResponse> getUpcomingReminders(
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return taskService.getUpcomingReminders(
@@ -45,24 +47,28 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(
+    public ResponseEntity<TaskResponse> getTaskById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return taskService
-                .getTaskById(id, userDetails.getUsername())
+                .getTaskById(
+                        id,
+                        userDetails.getUsername())
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseGet(() ->
+                        ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(
-            @RequestBody Task task,
+    public ResponseEntity<TaskResponse> createTask(
+            @Valid @RequestBody CreateTaskRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Task createdTask = taskService.createTask(
-                task,
-                userDetails.getUsername());
+        TaskResponse createdTask =
+                taskService.createTask(
+                        request,
+                        userDetails.getUsername());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -70,18 +76,19 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(
+    public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long id,
-            @RequestBody Task updatedTask,
+            @Valid @RequestBody UpdateTaskRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return taskService
                 .updateTask(
                         id,
-                        updatedTask,
+                        request,
                         userDetails.getUsername())
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseGet(() ->
+                        ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
@@ -99,5 +106,4 @@ public class TaskController {
 
         return ResponseEntity.noContent().build();
     }
-
 }

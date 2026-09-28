@@ -2,12 +2,17 @@ package com.beyza.backend.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.beyza.backend.dto.task.CreateTaskRequest;
+import com.beyza.backend.dto.task.TaskResponse;
+import com.beyza.backend.dto.task.UpdateTaskRequest;
 import com.beyza.backend.entity.Task;
+import com.beyza.backend.entity.TaskStatus;
 import com.beyza.backend.entity.UserAccount;
 import com.beyza.backend.repository.TaskRepository;
 import com.beyza.backend.repository.UserAccountRepository;
@@ -21,75 +26,112 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserAccountRepository userAccountRepository;
 
-    public List<Task> getAllTasks(String authenticatedEmail) {
-        return taskRepository
-                .findAllByOwner_EmailIgnoreCaseOrderByIdDesc(
-                        authenticatedEmail.trim());
-    }
-
-    public List<Task> getUpcomingReminders(
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getAllTasks(
             String authenticatedEmail) {
-
-        LocalDateTime now = LocalDateTime.now();
 
         return taskRepository
                 .findAllByOwner_EmailIgnoreCaseOrderByIdDesc(
                         authenticatedEmail.trim())
                 .stream()
-                .filter(task -> Boolean.TRUE.equals(task.getReminderEnabled()))
+                .map(TaskResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getUpcomingReminders(
+            String authenticatedEmail) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tomorrow = now.plusDays(1);
+
+        return taskRepository
+                .findAllByOwner_EmailIgnoreCaseOrderByIdDesc(
+                        authenticatedEmail.trim())
+                .stream()
+                .filter(task ->
+                        Boolean.TRUE.equals(
+                                task.getReminderEnabled()))
                 .filter(task -> task.getTaskDate() != null)
                 .filter(task -> task.getTaskTime() != null)
                 .filter(task -> task.getReminderOffset() != null)
-                .filter(task -> task.getStatus() != null
-                        && task.getStatus().name().equals("ACTIVE"))
+                .filter(task ->
+                        task.getStatus() == TaskStatus.ACTIVE)
                 .filter(task -> {
-                    LocalDateTime taskDateTime = LocalDateTime.of(
-                            task.getTaskDate(),
-                            task.getTaskTime());
+                    LocalDateTime taskDateTime =
+                            LocalDateTime.of(
+                                    task.getTaskDate(),
+                                    task.getTaskTime());
 
-                    LocalDateTime reminderDateTime = taskDateTime
-                            .minusMinutes(task.getReminderOffset());
+                    LocalDateTime reminderDateTime =
+                            taskDateTime.minusMinutes(
+                                    task.getReminderOffset());
 
-                    LocalDateTime tomorrow = now.plusDays(1);
+                    boolean taskHasNotPassed =
+                            !taskDateTime.isBefore(now);
 
-                    boolean taskHasNotPassed = !taskDateTime.isBefore(now);
-
-                    boolean reminderIsInNext24Hours = !reminderDateTime.isAfter(tomorrow);
+                    boolean reminderIsInNext24Hours =
+                            !reminderDateTime.isAfter(tomorrow);
 
                     return taskHasNotPassed
                             && reminderIsInNext24Hours;
                 })
-                .collect(Collectors.toList());
+                .map(TaskResponse::from)
+                .toList();
     }
 
-    public Optional<Task> getTaskById(
+    @Transactional(readOnly = true)
+    public Optional<TaskResponse> getTaskById(
             Long id,
             String authenticatedEmail) {
 
         return taskRepository
                 .findByIdAndOwner_EmailIgnoreCase(
                         id,
-                        authenticatedEmail.trim());
+                        authenticatedEmail.trim())
+                .map(TaskResponse::from);
     }
 
-    public Task createTask(
-            Task task,
+    @Transactional
+    public TaskResponse createTask(
+            CreateTaskRequest request,
             String authenticatedEmail) {
 
-        UserAccount owner = userAccountRepository
-                .findByEmailIgnoreCase(authenticatedEmail.trim())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Kullanıcı bulunamadı."));
+        UserAccount owner = getAuthenticatedUser(
+                authenticatedEmail);
 
-        task.setId(null);
+        Task task = new Task();
+
+        task.setContent(request.content().trim());
+        task.setColor(
+                request.color().toUpperCase(Locale.ROOT));
+        task.setPriority(request.priority());
+        task.setTaskDate(request.taskDate());
+        task.setTaskTime(request.taskTime());
+        task.setStatus(TaskStatus.ACTIVE);
+
+        boolean reminderEnabled =
+                Boolean.TRUE.equals(
+                        request.reminderEnabled());
+
+        task.setReminderEnabled(reminderEnabled);
+
+        task.setReminderOffset(
+                reminderEnabled
+                        ? request.reminderOffset()
+                        : null);
+
         task.setOwner(owner);
 
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+
+        return TaskResponse.from(savedTask);
     }
 
-    public Optional<Task> updateTask(
+    @Transactional
+    public Optional<TaskResponse> updateTask(
             Long id,
-            Task updatedTask,
+            UpdateTaskRequest request,
             String authenticatedEmail) {
 
         return taskRepository
@@ -97,21 +139,45 @@ public class TaskService {
                         id,
                         authenticatedEmail.trim())
                 .map(existingTask -> {
-                    existingTask.setContent(updatedTask.getContent());
-                    existingTask.setColor(updatedTask.getColor());
-                    existingTask.setPriority(updatedTask.getPriority());
-                    existingTask.setTaskDate(updatedTask.getTaskDate());
-                    existingTask.setTaskTime(updatedTask.getTaskTime());
-                    existingTask.setStatus(updatedTask.getStatus());
-                    existingTask.setReminderEnabled(
-                            updatedTask.getReminderEnabled());
-                    existingTask.setReminderOffset(
-                            updatedTask.getReminderOffset());
+                    existingTask.setContent(
+                            request.content().trim());
 
-                    return taskRepository.save(existingTask);
+                    existingTask.setColor(
+                            request.color()
+                                    .toUpperCase(Locale.ROOT));
+
+                    existingTask.setPriority(
+                            request.priority());
+
+                    existingTask.setTaskDate(
+                            request.taskDate());
+
+                    existingTask.setTaskTime(
+                            request.taskTime());
+
+                    existingTask.setStatus(
+                            request.status());
+
+                    boolean reminderEnabled =
+                            Boolean.TRUE.equals(
+                                    request.reminderEnabled());
+
+                    existingTask.setReminderEnabled(
+                            reminderEnabled);
+
+                    existingTask.setReminderOffset(
+                            reminderEnabled
+                                    ? request.reminderOffset()
+                                    : null);
+
+                    Task savedTask =
+                            taskRepository.save(existingTask);
+
+                    return TaskResponse.from(savedTask);
                 });
     }
 
+    @Transactional
     public boolean deleteTask(
             Long id,
             String authenticatedEmail) {
@@ -125,5 +191,15 @@ public class TaskService {
                     return true;
                 })
                 .orElse(false);
+    }
+
+    private UserAccount getAuthenticatedUser(
+            String authenticatedEmail) {
+
+        return userAccountRepository
+                .findByEmailIgnoreCase(
+                        authenticatedEmail.trim())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Kullanıcı bulunamadı."));
     }
 }

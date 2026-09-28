@@ -24,13 +24,12 @@ function ToDoCreate({ onCreateTodo }) {
     if (!newTodo.trim()) return;
 
     const request = {
-      content: newTodo,
-      color: color,
-      priority: priority,
+      content: newTodo.trim(),
+      color,
+      priority,
       taskDate: taskDate || null,
       taskTime: taskTime || null,
-      status: "ACTIVE",
-      reminderEnabled: reminderEnabled,
+      reminderEnabled,
       reminderOffset: reminderEnabled ? Number(reminderOffset) : null,
     };
     const created = await onCreateTodo(request);
