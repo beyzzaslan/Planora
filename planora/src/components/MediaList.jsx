@@ -120,8 +120,24 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
   };
 
   return (
-    <div className="media-list">
-      {mediaList.map((media) => (
+    <>
+      <div className="media-filter-bar" aria-label="Medya filtreleri">
+        {filters.map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            className={`media-filter-button ${
+              activeFilter === filter.id ? "active" : ""
+            }`}
+            onClick={() => setActiveFilter(filter.id)}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="media-list">
+      {filteredMedia.map((media) => (
         <article className="media-card" key={media.id}>
           {editingId === media.id ? (
             <form
@@ -239,7 +255,8 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
           )}
         </article>
       ))}
-    </div>
+      </div>
+    </>
   );
 }
 

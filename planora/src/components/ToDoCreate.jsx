@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "../css/todo.css";
 
 function ToDoCreate({ onCreateTodo }) {

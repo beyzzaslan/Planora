@@ -1,4 +1,3 @@
-import React from "react";
 import ToDo from "./ToDo";
 function ToDoList({ todos, onRemoveTodo, onUpdateTodo }) {
   return (

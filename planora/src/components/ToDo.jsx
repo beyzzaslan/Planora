@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { CiSquareRemove } from "react-icons/ci";
 import { CiEdit } from "react-icons/ci";
 import { FaCheck } from "react-icons/fa6";
