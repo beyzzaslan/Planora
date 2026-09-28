@@ -110,7 +110,6 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
 
     const updated = await onUpdateMedia(media.id, {
       title: editForm.title.trim(),
-      fileName: editForm.title.trim(),
       fileUrl: editForm.fileUrl.trim(),
       mediaType: editForm.mediaType,
     });

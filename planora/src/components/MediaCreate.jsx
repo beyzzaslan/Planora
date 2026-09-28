@@ -98,7 +98,6 @@ function MediaCreate({ onCreateMedia, onUploadMedia }) {
       } else {
         const payload = {
           title: title.trim(),
-          fileName: title.trim(),
           fileUrl: fileUrl.trim(),
           mediaType,
         };
