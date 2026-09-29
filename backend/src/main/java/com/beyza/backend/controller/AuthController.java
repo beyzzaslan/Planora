@@ -33,42 +33,29 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 
-@RestController
-@RequestMapping("/api/auth")
-@RequiredArgsConstructor
-public class AuthController {
+@ RestController 
 
-    private final AuthService authService;
-    private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository;
-    private final SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
+    @RequestMapping("/api/auth")
+    @RequiredArgsConstructor
+    public class AuthController {
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(
-            @Valid @RequestBody RegisterRequest request) {
+        private final AuthService authService;
+        private final AuthenticationManager authenticationManager;
+        private final SecurityContextRepository securityContextRepository;
+        private final SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
 
-        try {
-            UserResponse registeredUser = authService.register(request);
+        @PostMapping("/register")
+        public ResponseEntity<UserResponse> register(
+                @Valid @RequestBody RegisterRequest request) {
+
+            UserResponse registeredUser
+                    = authService.register(request);
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body(registeredUser);
-
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(Map.of(
-                            "message",
-                            exception.getMessage()));
-
-        } catch (IllegalStateException exception) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(Map.of(
-                            "message",
-                            exception.getMessage()));
         }
-    }
+    
 
     @PostMapping("/login")
     public ResponseEntity<?> login(

@@ -3,7 +3,6 @@ package com.beyza.backend.controller;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,55 +42,43 @@ public class ProfileController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadAvatar(
+    @PostMapping(
+            value = "/avatar",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> uploadAvatar(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file)
+            throws IOException {
 
-        try {
-            UserResponse updatedUser = profileService.uploadAvatar(
-                    userDetails.getUsername(),
-                    file);
+        UserResponse updatedUser
+                = profileService.uploadAvatar(
+                        userDetails.getUsername(),
+                        file);
 
-            return ResponseEntity.ok(updatedUser);
-
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(exception.getMessage());
-
-        } catch (IOException exception) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Avatar kaydedilirken bir hata oluştu.");
-        }
+        return ResponseEntity.ok(updatedUser);
     }
 
     @GetMapping("/avatar")
     public ResponseEntity<?> getAvatar(
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails)
+            throws IOException {
 
-        try {
-            Optional<ProfileService.AvatarFile> avatarOptional = profileService.getAvatar(
-                    userDetails.getUsername());
+        Optional<ProfileService.AvatarFile> avatarOptional
+                = profileService.getAvatar(
+                        userDetails.getUsername());
 
-            if (avatarOptional.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            ProfileService.AvatarFile avatar = avatarOptional.get();
-
-            return ResponseEntity
-                    .ok()
-                    .contentType(
-                            MediaType.parseMediaType(
-                                    avatar.contentType()))
-                    .body(avatar.resource());
-
-        } catch (IOException exception) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Avatar okunurken bir hata oluştu.");
+        if (avatarOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
+
+        ProfileService.AvatarFile avatar
+                = avatarOptional.get();
+
+        return ResponseEntity
+                .ok()
+                .contentType(
+                        MediaType.parseMediaType(
+                                avatar.contentType()))
+                .body(avatar.resource());
     }
 }

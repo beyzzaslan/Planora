@@ -55,39 +55,44 @@ public class MediaController {
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+@GetMapping("/{id}/file")
+public ResponseEntity<?> getMediaFile(
+        @PathVariable Long id,
+        @AuthenticationPrincipal UserDetails userDetails)
+        throws IOException {
 
-    @GetMapping("/{id}/file")
-    public ResponseEntity<?> getMediaFile(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    Optional<MediaService.StoredMediaFile> fileOptional =
+            mediaService.getMediaFile(
+                    id,
+                    userDetails.getUsername());
 
-        try {
-            Optional<MediaService.StoredMediaFile> fileOptional =
-                    mediaService.getMediaFile(id, userDetails.getUsername());
+    if (fileOptional.isEmpty()) {
+        return ResponseEntity.notFound().build();
+    }
 
-            if (fileOptional.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
+    MediaService.StoredMediaFile storedFile =
+            fileOptional.get();
 
-            MediaService.StoredMediaFile storedFile = fileOptional.get();
-            Resource resource = storedFile.resource();
-            ContentDisposition contentDisposition = ContentDisposition
+    Resource resource = storedFile.resource();
+
+    ContentDisposition contentDisposition =
+            ContentDisposition
                     .inline()
-                    .filename(storedFile.originalFileName(), StandardCharsets.UTF_8)
+                    .filename(
+                            storedFile.originalFileName(),
+                            StandardCharsets.UTF_8)
                     .build();
 
-            return ResponseEntity
-                    .ok()
-                    .contentType(MediaType.parseMediaType(storedFile.contentType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
-                    .body(resource);
-
-        } catch (IOException exception) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Dosya okunurken bir hata oluştu.");
-        }
-    }
+    return ResponseEntity
+            .ok()
+            .contentType(
+                    MediaType.parseMediaType(
+                            storedFile.contentType()))
+            .header(
+                    HttpHeaders.CONTENT_DISPOSITION,
+                    contentDisposition.toString())
+            .body(resource);
+}
 
     @PostMapping
     public ResponseEntity<MediaResponse> createMedia(
@@ -101,28 +106,25 @@ public class MediaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdMedia);
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadMedia(
-            @RequestParam("title") String title,
-            @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal UserDetails userDetails) {
+  @PostMapping(
+        value = "/upload",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<MediaResponse> uploadMedia(
+        @RequestParam("title") String title,
+        @RequestParam("file") MultipartFile file,
+        @AuthenticationPrincipal UserDetails userDetails)
+        throws IOException {
 
-        try {
-            MediaResponse uploadedMedia = mediaService.uploadMedia(
+    MediaResponse uploadedMedia =
+            mediaService.uploadMedia(
                     title,
                     file,
                     userDetails.getUsername());
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(uploadedMedia);
-
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(exception.getMessage());
-        } catch (IOException exception) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Dosya yüklenirken bir hata oluştu.");
-        }
-    }
+    return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(uploadedMedia);
+}
 
     @PutMapping("/{id}")
     public ResponseEntity<MediaResponse> updateMedia(
@@ -136,19 +138,20 @@ public class MediaController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMedia(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+ @DeleteMapping("/{id}")
+public ResponseEntity<Void> deleteMedia(
+        @PathVariable Long id,
+        @AuthenticationPrincipal UserDetails userDetails)
+        throws IOException {
 
-        try {
-            boolean deleted = mediaService.deleteMedia(id, userDetails.getUsername());
+    boolean deleted = mediaService.deleteMedia(
+            id,
+            userDetails.getUsername());
 
-            return deleted
-                    ? ResponseEntity.noContent().build()
-                    : ResponseEntity.notFound().build();
-        } catch (IOException exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    if (!deleted) {
+        return ResponseEntity.notFound().build();
     }
+
+    return ResponseEntity.noContent().build();
+}
 }
