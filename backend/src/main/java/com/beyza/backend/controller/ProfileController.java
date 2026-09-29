@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.beyza.backend.dto.auth.UserResponse;
+import com.beyza.backend.dto.profile.ChangePasswordRequest;
 import com.beyza.backend.dto.profile.UpdateProfileRequest;
 import com.beyza.backend.service.ProfileService;
 
@@ -29,6 +30,18 @@ import lombok.RequiredArgsConstructor;
 public class ProfileController {
 
     private final ProfileService profileService;
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+
+        profileService.changePassword(
+                userDetails.getUsername(),
+                request);
+
+        return ResponseEntity.noContent().build();
+    }
 
     @PutMapping
     public ResponseEntity<UserResponse> updateProfile(

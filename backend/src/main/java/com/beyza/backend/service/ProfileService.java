@@ -12,11 +12,13 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.beyza.backend.dto.auth.UserResponse;
+import com.beyza.backend.dto.profile.ChangePasswordRequest;
 import com.beyza.backend.dto.profile.UpdateProfileRequest;
 import com.beyza.backend.entity.UserAccount;
 import com.beyza.backend.repository.UserAccountRepository;
@@ -29,6 +31,8 @@ public class ProfileService {
 private static final long MAX_AVATAR_SIZE = 5 * 1024 * 1024;
 
 private final UserAccountRepository userAccountRepository;
+
+private final PasswordEncoder passwordEncoder;
 
 @Value("${app.avatar.upload-dir}")
 private String avatarUploadDir;
@@ -198,6 +202,8 @@ public Optional<AvatarFile> getAvatar(
     return Optional.of(
             new AvatarFile(resource, contentType));
 }
+
+
     private void deleteOldAvatar(
         String oldAvatarFileName,
         String newAvatarFileName,
@@ -224,5 +230,46 @@ public Optional<AvatarFile> getAvatar(
 public record AvatarFile(
         Resource resource,
         String contentType) {
+}
+@Transactional
+public void changePassword(
+        String authenticatedEmail,
+        ChangePasswordRequest request) {
+
+    UserAccount user = userAccountRepository
+            .findByEmailIgnoreCase(authenticatedEmail.trim())
+            .orElseThrow(() -> new IllegalStateException(
+                    "Kullanıcı bulunamadı."));
+
+    boolean currentPasswordMatches =
+            passwordEncoder.matches(
+                    request.currentPassword(),
+                    user.getPasswordHash());
+
+    if (!currentPasswordMatches) {
+        throw new IllegalArgumentException(
+                "Mevcut şifre hatalı.");
+    }
+
+    if (!request.newPassword()
+            .equals(request.confirmNewPassword())) {
+
+        throw new IllegalArgumentException(
+                "Yeni şifreler eşleşmiyor.");
+    }
+
+    if (passwordEncoder.matches(
+            request.newPassword(),
+            user.getPasswordHash())) {
+
+        throw new IllegalArgumentException(
+                "Yeni şifre mevcut şifreyle aynı olamaz.");
+    }
+
+    user.setPasswordHash(
+            passwordEncoder.encode(
+                    request.newPassword()));
+
+    userAccountRepository.save(user);
 }
 }
