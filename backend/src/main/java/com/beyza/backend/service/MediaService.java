@@ -33,7 +33,8 @@ import lombok.RequiredArgsConstructor;
 public class MediaService {
 
     private static final String LOCAL_UPLOAD_URL = "http://localhost:8080/uploads/";
-
+    private static final long MAX_MEDIA_SIZE
+            = 50L * 1024 * 1024;
     private final MediaRepository mediaRepository;
     private final UserAccountRepository userAccountRepository;
 
@@ -139,6 +140,10 @@ public class MediaService {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Dosya boş olamaz.");
         }
+        if (file.getSize() > MAX_MEDIA_SIZE) {
+            throw new IllegalArgumentException(
+                    "Dosya en fazla 50 MB olabilir.");
+        }
 
         UserAccount owner = getAuthenticatedUser(authenticatedEmail);
         String originalFileName = StringUtils.cleanPath(
@@ -170,6 +175,20 @@ public class MediaService {
         } else {
             throw new IllegalArgumentException(
                     "Yalnızca JPG, PNG, WebP, MP4 ve PDF yükleyebilirsin.");
+        }
+
+        String declaredContentType = file.getContentType();
+
+        if (declaredContentType == null
+                || !declaredContentType.equalsIgnoreCase(contentType)) {
+
+            throw new IllegalArgumentException(
+                    "Dosyanın uzantısı ile MIME türü uyuşmuyor.");
+        }
+
+        if (!hasValidFileSignature(file, extension)) {
+            throw new IllegalArgumentException(
+                    "Dosyanın gerçek içeriği geçersiz.");
         }
 
         String storedFileName = UUID.randomUUID() + extension;
@@ -255,9 +274,69 @@ public class MediaService {
         Files.deleteIfExists(filePath);
     }
 
+    private boolean hasValidFileSignature(
+            MultipartFile file,
+            String extension) throws IOException {
+
+        byte[] header;
+
+        try (var inputStream = file.getInputStream()) {
+            header = inputStream.readNBytes(12);
+        }
+
+        return switch (extension) {
+            case ".jpg" ->
+                header.length >= 3
+                && (header[0] & 0xFF) == 0xFF
+                && (header[1] & 0xFF) == 0xD8
+                && (header[2] & 0xFF) == 0xFF;
+
+            case ".png" ->
+                header.length >= 8
+                && (header[0] & 0xFF) == 0x89
+                && header[1] == 0x50
+                && header[2] == 0x4E
+                && header[3] == 0x47
+                && header[4] == 0x0D
+                && header[5] == 0x0A
+                && header[6] == 0x1A
+                && header[7] == 0x0A;
+
+            case ".webp" ->
+                header.length >= 12
+                && header[0] == 'R'
+                && header[1] == 'I'
+                && header[2] == 'F'
+                && header[3] == 'F'
+                && header[8] == 'W'
+                && header[9] == 'E'
+                && header[10] == 'B'
+                && header[11] == 'P';
+
+            case ".pdf" ->
+                header.length >= 5
+                && header[0] == '%'
+                && header[1] == 'P'
+                && header[2] == 'D'
+                && header[3] == 'F'
+                && header[4] == '-';
+
+            case ".mp4" ->
+                header.length >= 8
+                && header[4] == 'f'
+                && header[5] == 't'
+                && header[6] == 'y'
+                && header[7] == 'p';
+
+            default ->
+                false;
+        };
+    }
+
     public record StoredMediaFile(
             Resource resource,
             String contentType,
             String originalFileName) {
+
     }
 }
