@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import apiClient from "../api/apiClient";
-import useNotes from "./hooks/useNotes";
+
 function useTasks(currentUser) {
   const [todos, setTodos] = useState([]);
   const [reminders, setReminders] = useState([]);

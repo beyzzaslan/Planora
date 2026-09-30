@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import apiClient from "./api/apiClient";
 import "./App.css";
 import "./css/auth.css";
 import ToDoCreate from "./components/ToDoCreate";
@@ -7,6 +6,7 @@ import ToDoList from "./components/ToDoList";
 import "./css/notes.css";
 import NoteCreate from "./components/NoteCreate";
 import NoteList from "./components/NoteList";
+import useMedia from "./hooks/useMedia";
 import useNotes from "./hooks/useNotes";
 import useTasks from "./hooks/useTasks";
 import MediaCreate from "./components/MediaCreate";
@@ -29,7 +29,6 @@ import {
 } from "./api/profileApi";
 
 function App() {
-  const [mediaList, setMediaList] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -87,6 +86,15 @@ function App() {
     clearNoteData,
   } = useNotes(currentUser);
 
+  const {
+    mediaList,
+    createMedia,
+    uploadMedia,
+    deleteMedia,
+    updateMedia,
+    clearMediaData,
+  } = useMedia(currentUser, showToast);
+
   const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
 
   const profileAvatarUrl = buildProfileAvatarUrl(
@@ -116,77 +124,6 @@ function App() {
     showToast("Profil fotoğrafı başarıyla güncellendi.");
 
     return updatedUser;
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const fetchMedia = async () => {
-      try {
-        const response = await apiClient.get("/media");
-        setMediaList(response.data);
-      } catch (error) {
-        console.error("Media listesi getirilemedi:", error);
-      }
-    };
-    fetchMedia();
-  }, [currentUser]);
-
-  const createMedia = async (newMedia) => {
-    try {
-      const response = await apiClient.post("/media", newMedia);
-      setMediaList((current) => [response.data, ...current]);
-      return true;
-    } catch (error) {
-      console.error("Medya oluşturulamadı:", error);
-      return false;
-    }
-  };
-
-  const uploadMedia = async (title, file) => {
-    const formData = new FormData();
-
-    formData.append("title", title);
-    formData.append("file", file);
-
-    try {
-      const response = await apiClient.post("/media/upload", formData);
-
-      setMediaList((current) => [response.data, ...current]);
-      return true;
-    } catch (error) {
-      console.error("Dosya yüklenilemedi", error);
-      return false;
-    }
-  };
-
-  const deleteMedia = async (id) => {
-    try {
-      await apiClient.delete(`/media/${id}`);
-      setMediaList((current) => current.filter((media) => media.id !== id));
-      showToast("Kaynak başarıyla silindi.");
-    } catch (error) {
-      console.error("Kaynak silinemedi:", error);
-
-      showToast("Kaynak silinemedi. Lütfen tekrar dene.", "error");
-    }
-  };
-
-  const updateMedia = async (id, updatedMedia) => {
-    try {
-      const response = await apiClient.put(`/media/${id}`, updatedMedia);
-
-      setMediaList((current) =>
-        current.map((media) => (media.id === id ? response.data : media)),
-      );
-      showToast("Kaynak başarıyla güncellendi");
-      return true;
-    } catch (error) {
-      console.error("Kaynak güncellenemedi:", error);
-      showToast("Kaynak güncellenemedi. Lütfen tekrar dene.", "error");
-
-      return false;
-    }
   };
 
   useEffect(() => {
@@ -242,7 +179,7 @@ function App() {
       setCurrentUser(null);
       clearTaskData();
       clearNoteData();
-      setMediaList([]);
+      clearMediaData();
     } catch (error) {
       console.error("Çıkış yapılamadı:", error);
       showToast("Çıkış yapılamadı. Lütfen tekrar deneyin.", "error");
