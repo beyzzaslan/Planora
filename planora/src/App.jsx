@@ -7,6 +7,7 @@ import ToDoList from "./components/ToDoList";
 import "./css/notes.css";
 import NoteCreate from "./components/NoteCreate";
 import NoteList from "./components/NoteList";
+import useNotes from "./hooks/useNotes";
 import useTasks from "./hooks/useTasks";
 import MediaCreate from "./components/MediaCreate";
 import MediaList from "./components/MediaList";
@@ -28,7 +29,6 @@ import {
 } from "./api/profileApi";
 
 function App() {
-  const [notes, setNotes] = useState([]);
   const [mediaList, setMediaList] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -55,7 +55,6 @@ function App() {
     };
   }, [toast]);
   
-  const pinnedNotes = notes.filter((note) => note.pinned);
   const pageMeta = {
     dashboard: {
       label: "Your day at a glance",
@@ -77,6 +76,16 @@ function App() {
     updateTodo,
     clearTaskData,
   } = useTasks(currentUser);
+
+  const {
+    notes,
+    pinnedNotes,
+    createNote,
+    updateNote,
+    deleteNote,
+    togglePin,
+    clearNoteData,
+  } = useNotes(currentUser);
 
   const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
 
@@ -107,66 +116,6 @@ function App() {
     showToast("Profil fotoğrafı başarıyla güncellendi.");
 
     return updatedUser;
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const fetchNotes = async () => {
-      try {
-        const response = await apiClient.get("/notes");
-        setNotes(response.data);
-      } catch (error) {
-        console.error("Notlar getirilemedi: ", error);
-      }
-    };
-    fetchNotes();
-  }, [currentUser]);
-
-  const createNote = async (newNote) => {
-    try {
-      const response = await apiClient.post("/notes", newNote);
-      setNotes((current) => [response.data, ...current]);
-      return true;
-    } catch (error) {
-      console.error("Not oluşturulamadı : ", error);
-      return false;
-    }
-  };
-
-  const updateNote = async (id, updatedNote) => {
-    try {
-      const response = await apiClient.put(`/notes/${id}`, updatedNote);
-
-      setNotes((current) =>
-        current.map((note) => (note.id === id ? response.data : note)),
-      );
-
-      return true;
-    } catch (error) {
-      console.error("Not güncellenemedi:", error);
-      return false;
-    }
-  };
-
-  const deleteNote = async (id) => {
-    try {
-      await apiClient.delete(`/notes/${id}`);
-      setNotes((current) => current.filter((note) => note.id !== id));
-    } catch (error) {
-      console.error("Not silinemedi", error);
-    }
-  };
-
-  const togglePin = async (id) => {
-    try {
-      const response = await apiClient.patch(`/notes/${id}/pin`);
-      setNotes((current) =>
-        current.map((note) => (note.id === id ? response.data : note)),
-      );
-    } catch (error) {
-      console.error("Pin değiştirilemedi:", error);
-    }
   };
 
   useEffect(() => {
@@ -292,7 +241,7 @@ function App() {
 
       setCurrentUser(null);
       clearTaskData();
-      setNotes([]);
+      clearNoteData();
       setMediaList([]);
     } catch (error) {
       console.error("Çıkış yapılamadı:", error);
