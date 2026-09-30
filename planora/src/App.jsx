@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import apiClient from "./api/apiClient";
 import "./App.css";
 import "./css/auth.css";
@@ -7,7 +7,7 @@ import ToDoList from "./components/ToDoList";
 import "./css/notes.css";
 import NoteCreate from "./components/NoteCreate";
 import NoteList from "./components/NoteList";
-
+import useTasks from "./hooks/useTasks";
 import MediaCreate from "./components/MediaCreate";
 import MediaList from "./components/MediaList";
 
@@ -28,15 +28,13 @@ import {
 } from "./api/profileApi";
 
 function App() {
-  const [todos, setTodos] = useState([]);
-  const [reminders, setReminders] = useState([]);
   const [notes, setNotes] = useState([]);
-  const notifiedReminderIds = useRef(new Set());
   const [mediaList, setMediaList] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [toast, setToast] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const showToast = (message, type = "success") => {
     setToast({
@@ -56,10 +54,7 @@ function App() {
       clearTimeout(timeoutId);
     };
   }, [toast]);
-  const completedTodos = todos.filter(
-    (todo) => todo.status === "COMPLETED",
-  ).length;
-  const pendingTodos = todos.length - completedTodos;
+  
   const pinnedNotes = notes.filter((note) => note.pinned);
   const pageMeta = {
     dashboard: {
@@ -72,8 +67,16 @@ function App() {
     media: { label: "Keep your references", title: "Media", icon: "🗂️" },
     profile: { label: "Your personal space", title: "Profile", icon: "👤" },
   };
-
-  const [currentUser, setCurrentUser] = useState(null);
+  const {
+    todos,
+    reminders,
+    completedTodos,
+    pendingTodos,
+    createTodo,
+    removeTodo,
+    updateTodo,
+    clearTaskData,
+  } = useTasks(currentUser);
 
   const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
 
@@ -104,89 +107,6 @@ function App() {
     showToast("Profil fotoğrafı başarıyla güncellendi.");
 
     return updatedUser;
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const getTasks = async () => {
-      try {
-        const response = await apiClient.get("/tasks");
-        setTodos(response.data);
-      } catch (error) {
-        console.error("Tasklar getirilemedi : ", error);
-      }
-    };
-    getTasks();
-  }, [currentUser]);
-
-  const refreshReminders = useCallback(async () => {
-    try {
-      const response = await apiClient.get("/tasks/reminders");
-      setReminders(response.data);
-
-      if ("Notification" in window && Notification.permission === "granted") {
-        const now = new Date();
-
-        response.data.forEach((reminder) => {
-          const taskDateTime = new Date(
-            `${reminder.taskDate}T${reminder.taskTime}`,
-          );
-
-          const reminderDateTime = new Date(
-            taskDateTime.getTime() - reminder.reminderOffset * 60 * 1000,
-          );
-
-          const reminderIsDue = reminderDateTime <= now;
-          const taskHasNotPassed = taskDateTime > now;
-          const reminderKey = `${reminder.id}-${reminder.taskDate}-${reminder.taskTime}`;
-
-          if (
-            reminderIsDue &&
-            taskHasNotPassed &&
-            !notifiedReminderIds.current.has(reminderKey)
-          ) {
-            new Notification("Planora Hatırlatıcısı", {
-              body: `${reminder.content} - ${reminder.reminderOffset} dakika kaldı`,
-            });
-
-            notifiedReminderIds.current.add(reminderKey);
-          }
-        });
-      }
-    } catch (error) {
-      console.error("Hatırlatıcılar getirilemedi : ", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const initialReminderTimeout = setTimeout(refreshReminders, 0);
-    const reminderInterval = setInterval(refreshReminders, 60000);
-
-    return () => {
-      clearTimeout(initialReminderTimeout);
-      clearInterval(reminderInterval);
-    };
-  }, [currentUser, refreshReminders]);
-
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  const createTodo = async (newTodo) => {
-    try {
-      const response = await apiClient.post("/tasks", newTodo);
-      setTodos((currentTodos) => [...currentTodos, response.data]);
-      refreshReminders();
-      return true;
-    } catch (error) {
-      console.error("Task oluşturulamadı", error);
-      return false;
-    }
   };
 
   useEffect(() => {
@@ -246,33 +166,6 @@ function App() {
       );
     } catch (error) {
       console.error("Pin değiştirilemedi:", error);
-    }
-  };
-
-  const removeTodo = async (todoId) => {
-    try {
-      await apiClient.delete(`/tasks/${todoId}`);
-      setTodos((currentTodos) =>
-        currentTodos.filter((todo) => todo.id !== todoId),
-      );
-      refreshReminders();
-    } catch (error) {
-      console.error("Task silinemedi:", error);
-    }
-  };
-
-  const updateTodo = async (id, updatedTodo) => {
-    try {
-      const response = await apiClient.put(`/tasks/${id}`, updatedTodo);
-      setTodos((currentTodos) =>
-        currentTodos.map((todo) => (todo.id == id ? response.data : todo)),
-      );
-      refreshReminders();
-      return true;
-    } catch (error) {
-      console.error("Task güncellenemedi:", error);
-
-      return false;
     }
   };
 
@@ -398,8 +291,7 @@ function App() {
       await logoutUser();
 
       setCurrentUser(null);
-      setTodos([]);
-      setReminders([]);
+      clearTaskData();
       setNotes([]);
       setMediaList([]);
     } catch (error) {
