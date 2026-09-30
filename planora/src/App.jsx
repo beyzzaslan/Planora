@@ -532,15 +532,7 @@ function App() {
                   >
                     Profile
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveTab("dashboard");
-                      setProfileMenuOpen(false);
-                    }}
-                  >
-                    Settings
-                  </button>
+                
                   <button type="button" onClick={handleLogout}>
                     Sign out
                   </button>
