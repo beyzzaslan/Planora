@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import "./css/auth.css";
-import ToDoCreate from "./components/ToDoCreate";
-import ToDoList from "./components/ToDoList";
 import "./css/notes.css";
-import NoteCreate from "./components/NoteCreate";
-import NoteList from "./components/NoteList";
 import DashboardPage from "./components/dashboard/DashboardPage";
+import MediaPage from "./components/media/MediaPage";
+import NotesPage from "./components/notes/NotesPage";
+import TasksPage from "./components/tasks/TasksPage";
 import useMedia from "./hooks/useMedia";
 import useNotes from "./hooks/useNotes";
 import useTasks from "./hooks/useTasks";
-import MediaCreate from "./components/MediaCreate";
-import MediaList from "./components/MediaList";
 
 import AuthPage from "./components/auth/AuthPage";
 import {
@@ -332,63 +329,34 @@ function App() {
         )}
 
         {activeTab === "tasks" && (
-          <div className="content-section">
-            <div className="task-summary-row">
-              <div className="task-summary-card">
-                <span>Total</span>
-                <strong>{todos.length}</strong>
-              </div>
-              <div className="task-summary-card">
-                <span>Done</span>
-                <strong>{completedTodos}</strong>
-              </div>
-              <div className="task-summary-card">
-                <span>Pending</span>
-                <strong>{pendingTodos}</strong>
-              </div>
-            </div>
-            <ToDoCreate onCreateTodo={createTodo} />
-            <ToDoList
-              todos={todos}
-              onRemoveTodo={removeTodo}
-              onUpdateTodo={updateTodo}
-            />
-          </div>
+          <TasksPage
+            todos={todos}
+            completedTodos={completedTodos}
+            pendingTodos={pendingTodos}
+            onCreateTodo={createTodo}
+            onRemoveTodo={removeTodo}
+            onUpdateTodo={updateTodo}
+          />
         )}
 
         {activeTab === "notes" && (
-          <div className="content-section">
-            <div className="notes-section">
-              <div className="note-create-column">
-                <NoteCreate onCreateNote={createNote} />
-              </div>
-
-              <div className="note-list-column">
-                <NoteList
-                  notes={notes}
-                  onDeleteNote={deleteNote}
-                  onUpdateNote={updateNote}
-                  onTogglePin={togglePin}
-                />
-              </div>
-            </div>
-          </div>
+          <NotesPage
+            notes={notes}
+            onCreateNote={createNote}
+            onDeleteNote={deleteNote}
+            onUpdateNote={updateNote}
+            onTogglePin={togglePin}
+          />
         )}
 
         {activeTab === "media" && (
-          <div className="content-section">
-            <div className="media-section">
-              <MediaCreate
-                onCreateMedia={createMedia}
-                onUploadMedia={uploadMedia}
-              />
-              <MediaList
-                mediaList={mediaList}
-                onDeleteMedia={deleteMedia}
-                onUpdateMedia={updateMedia}
-              />
-            </div>
-          </div>
+          <MediaPage
+            mediaList={mediaList}
+            onCreateMedia={createMedia}
+            onUploadMedia={uploadMedia}
+            onDeleteMedia={deleteMedia}
+            onUpdateMedia={updateMedia}
+          />
         )}
 
         {activeTab === "profile" && (
