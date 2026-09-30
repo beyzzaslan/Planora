@@ -1,14 +1,32 @@
 import { useRef, useState } from "react";
 import { FiCamera } from "react-icons/fi";
-function ProfilePage({ user, avatarUrl, onSaveProfile, onUploadAvatar }) {
+
+function ProfilePage({
+  user,
+  avatarUrl,
+  onSaveProfile,
+  onUploadAvatar,
+  onChangePassword,
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
     name: user.name,
     focus: user.focus || "",
   });
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const avatarInputRef = useRef(null);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -17,6 +35,43 @@ function ProfilePage({ user, avatarUrl, onSaveProfile, onUploadAvatar }) {
       ...currentForm,
       [name]: value,
     }));
+  };
+
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target;
+
+    setPasswordForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const handlePasswordSubmit = async (event) => {
+    event.preventDefault();
+    setPasswordError("");
+
+    if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
+      setPasswordError("Yeni şifreler eşleşmiyor.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      await onChangePassword(passwordForm);
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
+    } catch (requestError) {
+      setPasswordError(
+        requestError.response?.data?.message || "Şifre değiştirilemedi.",
+      );
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleAvatarChange = async (event) => {
@@ -73,7 +128,6 @@ function ProfilePage({ user, avatarUrl, onSaveProfile, onUploadAvatar }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setError("");
     setIsSaving(true);
 
@@ -92,9 +146,6 @@ function ProfilePage({ user, avatarUrl, onSaveProfile, onUploadAvatar }) {
 
   const firstLetter = user.name?.trim().charAt(0).toUpperCase() || "?";
 
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-
-  const avatarInputRef = useRef(null);
   return (
     <section className="profile-page">
       <div className="profile-cover" />
@@ -224,6 +275,76 @@ function ProfilePage({ user, avatarUrl, onSaveProfile, onUploadAvatar }) {
               </button>
             </div>
           )}
+        </form>
+
+        <form
+          className="profile-details-form profile-password-form"
+          onSubmit={handlePasswordSubmit}
+        >
+          <div className="profile-section-heading">
+            <h3>Şifre değiştir</h3>
+            <p>Hesabın için güçlü ve benzersiz bir şifre kullan.</p>
+          </div>
+
+          <div className="profile-fields-grid">
+            <label className="profile-field">
+              <span>Mevcut şifre</span>
+              <input
+                type="password"
+                name="currentPassword"
+                value={passwordForm.currentPassword}
+                onChange={handlePasswordChange}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+
+            <label className="profile-field">
+              <span>Yeni şifre</span>
+              <input
+                type="password"
+                name="newPassword"
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={72}
+                required
+              />
+            </label>
+
+            <label className="profile-field">
+              <span>Yeni şifre tekrarı</span>
+              <input
+                type="password"
+                name="confirmNewPassword"
+                value={passwordForm.confirmNewPassword}
+                onChange={handlePasswordChange}
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={72}
+                required
+              />
+            </label>
+          </div>
+
+          {passwordError && (
+            <p className="profile-error" role="alert">
+              {passwordError}
+            </p>
+          )}
+
+          <div className="profile-form-actions">
+            <button
+              type="submit"
+              className="profile-save-button"
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword
+                ? "Şifre değiştiriliyor..."
+                : "Şifreyi değiştir"}
+            </button>
+          </div>
         </form>
       </div>
     </section>

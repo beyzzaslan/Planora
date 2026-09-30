@@ -22,6 +22,7 @@ import ProfilePage from "./components/ProfilePage";
 import "./css/profile.css";
 import {
   buildProfileAvatarUrl,
+  changePassword,
   updateProfile,
   uploadProfileAvatar,
 } from "./api/profileApi";
@@ -87,6 +88,11 @@ function App() {
     showToast("Profil başarıyla güncellendi.");
 
     return updatedUser;
+  };
+
+  const handleChangePassword = async (passwordData) => {
+    await changePassword(passwordData);
+    showToast("Şifren başarıyla değiştirildi.");
   };
 
   const handleUploadAvatar = async (file) => {
@@ -683,7 +689,8 @@ function App() {
               avatarUrl={profileAvatarUrl}
               onSaveProfile={handleSaveProfile}
               onUploadAvatar={handleUploadAvatar}
-            />{" "}
+              onChangePassword={handleChangePassword}
+            />
           </div>
         )}
       </main>

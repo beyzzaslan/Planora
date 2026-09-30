@@ -29,3 +29,7 @@ export function buildProfileAvatarUrl(
 
   return `${API_BASE_URL}${avatarPath}?v=${version}`;
 }
+
+export async function changePassword(passwordData) {
+  await apiClient.put("/profile/password", passwordData);
+}
