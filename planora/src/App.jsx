@@ -3,6 +3,7 @@ import "./App.css";
 import "./css/auth.css";
 import "./css/notes.css";
 import DashboardPage from "./components/dashboard/DashboardPage";
+import AppLayout from "./components/layout/AppLayout";
 import MediaPage from "./components/media/MediaPage";
 import NotesPage from "./components/notes/NotesPage";
 import TasksPage from "./components/tasks/TasksPage";
@@ -28,7 +29,6 @@ import {
 
 function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [toast, setToast] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -52,17 +52,6 @@ function App() {
     };
   }, [toast]);
   
-  const pageMeta = {
-    dashboard: {
-      label: "Your day at a glance",
-      title: "Dashboard",
-      icon: "📊",
-    },
-    tasks: { label: "Plan and organize", title: "Tasks", icon: "✅" },
-    notes: { label: "Capture your ideas", title: "Notes", icon: "📝" },
-    media: { label: "Keep your references", title: "Media", icon: "🗂️" },
-    profile: { label: "Your personal space", title: "Profile", icon: "👤" },
-  };
   const {
     todos,
     reminders,
@@ -169,8 +158,6 @@ function App() {
   };
 
   const handleLogout = async () => {
-    setProfileMenuOpen(false);
-
     try {
       await logoutUser();
 
@@ -193,130 +180,16 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      {toast && (
-        <div
-          className={`app-toast ${toast.type}`}
-          role={toast.type === "error" ? "alert" : "status"}
-        >
-          <span className="app-toast-icon">
-            {toast.type === "error" ? "✕" : "✓"}
-          </span>
-
-          <span>{toast.message}</span>
-
-          <button
-            type="button"
-            className="app-toast-close"
-            onClick={() => setToast(null)}
-            aria-label="Bildirimi kapat"
-          >
-            ×
-          </button>
-        </div>
-      )}
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">P</div>
-          <div>
-            <strong>Planora</strong>
-            <small>Personal Planner</small>
-          </div>
-        </div>
-
-        <nav className="nav-menu">
-          <button
-            className={
-              activeTab === "dashboard" ? "nav-item active" : "nav-item"
-            }
-            onClick={() => setActiveTab("dashboard")}
-          >
-            Dashboard
-          </button>
-          <button
-            className={activeTab === "tasks" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("tasks")}
-          >
-            Tasks
-          </button>
-          <button
-            className={activeTab === "notes" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("notes")}
-          >
-            Notes
-          </button>
-          <button
-            className={activeTab === "media" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("media")}
-          >
-            Media
-          </button>
-          <button
-            className={activeTab === "profile" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("profile")}
-          >
-            Profile
-          </button>
-        </nav>
-      </aside>
-
-      <main className="main-panel">
-        <header className="topbar">
-          <div>
-            <p className="topbar-label">{pageMeta[activeTab].label}</p>
-            <h1>
-              <span className="page-icon" aria-hidden="true">
-                {pageMeta[activeTab].icon}
-              </span>
-              {pageMeta[activeTab].title}
-            </h1>
-          </div>
-
-          <div className="topbar-actions">
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={() => setActiveTab("tasks")}
-            >
-              + New Task
-            </button>
-
-            <div className="profile-menu-wrapper">
-              <button
-                type="button"
-                className="profile-badge"
-                onClick={() => setProfileMenuOpen((current) => !current)}
-              >
-                {profileAvatarUrl ? (
-                  <img
-                    src={profileAvatarUrl}
-                    alt={`${currentUser.name} profil fotoğrafı`}
-                  />
-                ) : (
-                  currentUser.name?.trim().charAt(0).toUpperCase() || "?"
-                )}
-              </button>
-
-              {profileMenuOpen && (
-                <div className="profile-menu">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveTab("profile");
-                      setProfileMenuOpen(false);
-                    }}
-                  >
-                    Profile
-                  </button>
-                
-                  <button type="button" onClick={handleLogout}>
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+   
+  <AppLayout
+    activeTab={activeTab}
+    onTabChange={setActiveTab}
+    currentUser={currentUser}
+    profileAvatarUrl={profileAvatarUrl}
+    toast={toast}
+    onCloseToast={() => setToast(null)}
+    onLogout={handleLogout}
+  >
 
         {activeTab === "dashboard" && (
           <DashboardPage
@@ -370,9 +243,8 @@ function App() {
             />
           </div>
         )}
-      </main>
-    </div>
-  );
+      </AppLayout>
+);
 }
 
 export default App;
