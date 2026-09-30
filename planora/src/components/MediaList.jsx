@@ -6,7 +6,7 @@ import {
   FiTrash2,
   FiVideo,
 } from "react-icons/fi";
-import { API_BASE_URL } from "../api/apiClient";
+import { API_BASE_URL, BACKEND_BASE_URL } from "../api/apiClient";
 function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -35,16 +35,16 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
   });
 
   const getMediaAccessUrl = (media) => {
-  const isUploadedFile = media.fileUrl?.startsWith(
-    "http://localhost:8080/uploads/",
-  );
+    const isUploadedFile = media.fileUrl?.startsWith(
+      `${BACKEND_BASE_URL}/uploads/`,
+    );
 
-  if (isUploadedFile) {
-    return `${API_BASE_URL}/media/${media.id}/file`;
-  }
+    if (isUploadedFile) {
+      return `${API_BASE_URL}/media/${media.id}/file`;
+    }
 
-  return media.fileUrl;
-};
+    return media.fileUrl;
+  };
   const getMediaPreview = (media) => {
     if (media.mediaType.startsWith("image/")) {
       return (
@@ -137,124 +137,124 @@ function MediaList({ mediaList, onDeleteMedia, onUpdateMedia }) {
       </div>
 
       <div className="media-list">
-      {filteredMedia.map((media) => (
-        <article className="media-card" key={media.id}>
-          {editingId === media.id ? (
-            <form
-              className="media-edit-form"
-              onSubmit={(event) => handleUpdate(event, media)}
-            >
-              <label>
-                Başlık
-                <input
-                  type="text"
-                  value={editForm.title}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      title: event.target.value,
-                    })
-                  }
-                  required
-                />
-              </label>
-
-              <label>
-                Bağlantı
-                <input
-                  type="url"
-                  value={editForm.fileUrl}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      fileUrl: event.target.value,
-                    })
-                  }
-                  required
-                />
-              </label>
-
-              <label>
-                Kaynak türü
-                <select
-                  value={editForm.mediaType}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      mediaType: event.target.value,
-                    })
-                  }
-                >
-                  <option value="image/png">Görsel</option>
-                  <option value="video/mp4">Video</option>
-                  <option value="application/pdf">PDF / Doküman</option>
-                  <option value="text/html">Web bağlantısı</option>
-                </select>
-              </label>
-
-              <div className="media-edit-actions">
-                <button type="button" onClick={cancelEditing}>
-                  Vazgeç
-                </button>
-
-                <button type="submit">Kaydet</button>
-              </div>
-            </form>
-          ) : (
-            <>
-              {getMediaPreview(media)}
-
-              <div className="media-card-content">
-                <div>
-                  <span className="media-type-label">
-                    {media.mediaType.startsWith("image/")
-                      ? "Görsel"
-                      : media.mediaType.startsWith("video/")
-                        ? "Video"
-                        : media.mediaType === "application/pdf"
-                          ? "PDF / Doküman"
-                          : "Web bağlantısı"}
-                  </span>
-
-                  <h4>{media.title}</h4>
-                </div>
-
-                <div className="media-card-actions">
-                  <button
-                    type="button"
-                    className="media-edit-button"
-                    onClick={() => startEditing(media)}
-                    aria-label={`${media.title} kaynağını düzenle`}
-                    title="Kaynağı düzenle"
-                  >
-                    <FiEdit2 />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="media-delete-button"
-                    onClick={() => handleDelete(media)}
-                    aria-label={`${media.title} kaynağını sil`}
-                    title="Kaynağı sil"
-                  >
-                    <FiTrash2 />
-                  </button>
-                </div>
-              </div>
-
-              <a
-                className="media-open-link"
-                href={getMediaAccessUrl(media)}
-                target="_blank"
-                rel="noreferrer"
+        {filteredMedia.map((media) => (
+          <article className="media-card" key={media.id}>
+            {editingId === media.id ? (
+              <form
+                className="media-edit-form"
+                onSubmit={(event) => handleUpdate(event, media)}
               >
-                Kaynağı aç
-                <FiExternalLink />
-              </a>
-            </>
-          )}
-        </article>
-      ))}
+                <label>
+                  Başlık
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(event) =>
+                      setEditForm({
+                        ...editForm,
+                        title: event.target.value,
+                      })
+                    }
+                    required
+                  />
+                </label>
+
+                <label>
+                  Bağlantı
+                  <input
+                    type="url"
+                    value={editForm.fileUrl}
+                    onChange={(event) =>
+                      setEditForm({
+                        ...editForm,
+                        fileUrl: event.target.value,
+                      })
+                    }
+                    required
+                  />
+                </label>
+
+                <label>
+                  Kaynak türü
+                  <select
+                    value={editForm.mediaType}
+                    onChange={(event) =>
+                      setEditForm({
+                        ...editForm,
+                        mediaType: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="image/png">Görsel</option>
+                    <option value="video/mp4">Video</option>
+                    <option value="application/pdf">PDF / Doküman</option>
+                    <option value="text/html">Web bağlantısı</option>
+                  </select>
+                </label>
+
+                <div className="media-edit-actions">
+                  <button type="button" onClick={cancelEditing}>
+                    Vazgeç
+                  </button>
+
+                  <button type="submit">Kaydet</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                {getMediaPreview(media)}
+
+                <div className="media-card-content">
+                  <div>
+                    <span className="media-type-label">
+                      {media.mediaType.startsWith("image/")
+                        ? "Görsel"
+                        : media.mediaType.startsWith("video/")
+                          ? "Video"
+                          : media.mediaType === "application/pdf"
+                            ? "PDF / Doküman"
+                            : "Web bağlantısı"}
+                    </span>
+
+                    <h4>{media.title}</h4>
+                  </div>
+
+                  <div className="media-card-actions">
+                    <button
+                      type="button"
+                      className="media-edit-button"
+                      onClick={() => startEditing(media)}
+                      aria-label={`${media.title} kaynağını düzenle`}
+                      title="Kaynağı düzenle"
+                    >
+                      <FiEdit2 />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="media-delete-button"
+                      onClick={() => handleDelete(media)}
+                      aria-label={`${media.title} kaynağını sil`}
+                      title="Kaynağı sil"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
+                </div>
+
+                <a
+                  className="media-open-link"
+                  href={getMediaAccessUrl(media)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Kaynağı aç
+                  <FiExternalLink />
+                </a>
+              </>
+            )}
+          </article>
+        ))}
       </div>
     </>
   );

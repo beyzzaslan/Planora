@@ -32,7 +32,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MediaService {
 
-    private static final String LOCAL_UPLOAD_URL = "http://localhost:8080/uploads/";
     private static final long MAX_MEDIA_SIZE
             = 50L * 1024 * 1024;
     private final MediaRepository mediaRepository;
@@ -40,6 +39,9 @@ public class MediaService {
 
     @Value("${app.upload.dir}")
     private String uploadDir;
+
+    @Value("${app.upload.base-url}")
+    private String uploadBaseUrl;
 
     @Transactional(readOnly = true)
     public List<MediaResponse> getAllMedia(String authenticatedEmail) {
@@ -65,11 +67,11 @@ public class MediaService {
         Media media = mediaOptional.get();
         String fileUrl = media.getFileUrl();
 
-        if (fileUrl == null || !fileUrl.startsWith(LOCAL_UPLOAD_URL)) {
+        if (fileUrl == null || !fileUrl.startsWith(uploadBaseUrl)) {
             return Optional.empty();
         }
 
-        String storedFileName = fileUrl.substring(LOCAL_UPLOAD_URL.length());
+        String storedFileName = fileUrl.substring(uploadBaseUrl.length());
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         Path filePath = uploadPath.resolve(storedFileName).normalize();
 
@@ -209,7 +211,7 @@ public class MediaService {
         Media media = new Media();
         media.setTitle(title.trim());
         media.setFileName(originalFileName);
-        media.setFileUrl(LOCAL_UPLOAD_URL + storedFileName);
+        media.setFileUrl(uploadBaseUrl + storedFileName);
         media.setMediaType(contentType);
         media.setOwner(owner);
 
@@ -259,11 +261,11 @@ public class MediaService {
     private void deleteUploadedFile(Media media) throws IOException {
         String fileUrl = media.getFileUrl();
 
-        if (fileUrl == null || !fileUrl.startsWith(LOCAL_UPLOAD_URL)) {
+        if (fileUrl == null || !fileUrl.startsWith(uploadBaseUrl)) {
             return;
         }
 
-        String storedFileName = fileUrl.substring(LOCAL_UPLOAD_URL.length());
+        String storedFileName = fileUrl.substring(uploadBaseUrl.length());
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         Path filePath = uploadPath.resolve(storedFileName).normalize();
 
