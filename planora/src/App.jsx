@@ -14,6 +14,7 @@ import useTasks from "./hooks/useTasks";
 import AuthPage from "./components/auth/AuthPage";
 import {
   getCurrentUser,
+  initializeCsrf,
   loginUser,
   logoutUser,
   registerUser,
@@ -51,7 +52,7 @@ function App() {
       clearTimeout(timeoutId);
     };
   }, [toast]);
-  
+
   const {
     todos,
     reminders,
@@ -118,6 +119,7 @@ function App() {
 
     const checkSession = async () => {
       try {
+        await initializeCsrf();
         const user = await getCurrentUser();
 
         if (isActive) {
@@ -180,71 +182,69 @@ function App() {
   }
 
   return (
-   
-  <AppLayout
-    activeTab={activeTab}
-    onTabChange={setActiveTab}
-    currentUser={currentUser}
-    profileAvatarUrl={profileAvatarUrl}
-    toast={toast}
-    onCloseToast={() => setToast(null)}
-    onLogout={handleLogout}
-  >
+    <AppLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      currentUser={currentUser}
+      profileAvatarUrl={profileAvatarUrl}
+      toast={toast}
+      onCloseToast={() => setToast(null)}
+      onLogout={handleLogout}
+    >
+      {activeTab === "dashboard" && (
+        <DashboardPage
+          todos={todos}
+          notes={notes}
+          mediaList={mediaList}
+          reminders={reminders}
+          pinnedNotes={pinnedNotes}
+        />
+      )}
 
-        {activeTab === "dashboard" && (
-          <DashboardPage
-            todos={todos}
-            notes={notes}
-            mediaList={mediaList}
-            reminders={reminders}
-            pinnedNotes={pinnedNotes}
+      {activeTab === "tasks" && (
+        <TasksPage
+          todos={todos}
+          completedTodos={completedTodos}
+          pendingTodos={pendingTodos}
+          onCreateTodo={createTodo}
+          onRemoveTodo={removeTodo}
+          onUpdateTodo={updateTodo}
+        />
+      )}
+
+      {activeTab === "notes" && (
+        <NotesPage
+          notes={notes}
+          onCreateNote={createNote}
+          onDeleteNote={deleteNote}
+          onUpdateNote={updateNote}
+          onTogglePin={togglePin}
+        />
+      )}
+
+      {activeTab === "media" && (
+        <MediaPage
+          mediaList={mediaList}
+          onCreateMedia={createMedia}
+          onUploadMedia={uploadMedia}
+          onDeleteMedia={deleteMedia}
+          onUpdateMedia={updateMedia}
+        />
+      )}
+
+      {activeTab === "profile" && (
+        <div className="content-section">
+          <ProfilePage
+            user={currentUser}
+            avatarUrl={profileAvatarUrl}
+            onSaveProfile={handleSaveProfile}
+            onUploadAvatar={handleUploadAvatar}
+            onChangePassword={handleChangePassword}
           />
-        )}
-
-        {activeTab === "tasks" && (
-          <TasksPage
-            todos={todos}
-            completedTodos={completedTodos}
-            pendingTodos={pendingTodos}
-            onCreateTodo={createTodo}
-            onRemoveTodo={removeTodo}
-            onUpdateTodo={updateTodo}
-          />
-        )}
-
-        {activeTab === "notes" && (
-          <NotesPage
-            notes={notes}
-            onCreateNote={createNote}
-            onDeleteNote={deleteNote}
-            onUpdateNote={updateNote}
-            onTogglePin={togglePin}
-          />
-        )}
-
-        {activeTab === "media" && (
-          <MediaPage
-            mediaList={mediaList}
-            onCreateMedia={createMedia}
-            onUploadMedia={uploadMedia}
-            onDeleteMedia={deleteMedia}
-            onUpdateMedia={updateMedia}
-          />
-        )}
-
-        {activeTab === "profile" && (
-          <div className="content-section">
-            <ProfilePage
-              user={currentUser}
-              avatarUrl={profileAvatarUrl}
-              onSaveProfile={handleSaveProfile}
-              onUploadAvatar={handleUploadAvatar}
-              onChangePassword={handleChangePassword}
-            />
-          </div>
-        )}
-      </AppLayout>
-);
+        </div>
+      )}
+    </AppLayout>
+  );
 }
 
 export default App;

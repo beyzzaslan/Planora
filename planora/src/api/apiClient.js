@@ -8,6 +8,9 @@ export const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
 });
 
 export default apiClient;

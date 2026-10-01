@@ -23,3 +23,7 @@ export async function logoutUser() {
 
   return response.data;
 }
+
+export async function initializeCsrf() {
+  await apiClient.get("/auth/csrf");
+}

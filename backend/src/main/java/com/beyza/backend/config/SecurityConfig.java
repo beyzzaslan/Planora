@@ -2,14 +2,16 @@ package com.beyza.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -38,26 +40,31 @@ public class SecurityConfig {
             throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                .csrfTokenRepository(
+                        CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(
+                        new CsrfTokenRequestAttributeHandler()))
                 .cors(cors -> {
                 })
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                "/api/auth/register",
-                                "/api/auth/login")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated())
+                .requestMatchers(
+                        "/api/auth/csrf",
+                        "/api/auth/register",
+                        "/api/auth/login")
+                .permitAll()
+                .anyRequest()
+                .authenticated())
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(
-                                (request, response, authException) -> {
-                                    response.setStatus(
-                                            HttpServletResponse.SC_UNAUTHORIZED);
-                                    response.setContentType("application/json");
-                                    response.setCharacterEncoding("UTF-8");
-                                    response.getWriter().write(
-                                            "{\"message\":\"Giriş yapmanız gerekiyor.\"}");
-                                }))
+                .authenticationEntryPoint(
+                        (request, response, authException) -> {
+                            response.setStatus(
+                                    HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write(
+                                    "{\"message\":\"Giriş yapmanız gerekiyor.\"}");
+                        }))
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());
 
